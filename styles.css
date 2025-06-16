@@ -100,6 +100,14 @@ button:active {
   font-style: italic; /* Elegant italic for fancy names */
 }
 
+/* Stage information for multi-stage mixing */
+#stage-info {
+  font-size: 1rem;
+  color: #666;
+  margin-top: 0.5rem;
+  font-style: normal;
+}
+
 /* ==============================================
    COLOR MIXING INTERFACE
    ============================================== */
