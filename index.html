@@ -7,8 +7,58 @@
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
-    <h1>Color Mixing Game</h1>
-    <p>Setup successful!</p>
+    <!-- Welcome Screen -->
+    <div id="welcome-screen" class="screen">
+      <h1>Master of Colors</h1>
+      <p>Recreate famous paintings by mixing colors!</p>
+      <button id="start-game-btn">Start Game</button>
+    </div>
+
+    <!-- Game Screen -->
+    <div id="game-screen" class="screen hidden">
+      <div id="game-header">
+        <h2 id="round-info">Round 1 of 6</h2>
+        <h3 id="color-name">Venetian Sunset</h3>
+      </div>
+
+      <!-- Target Color Section -->
+      <div id="target-section">
+        <button id="view-target-btn">View Target Color</button>
+      </div>
+
+      <!-- Mixing Section -->
+      <div id="mixing-section" class="hidden">
+        <div id="color-swatches">
+          <div class="color-swatch">
+            <div id="color1" class="color-display"></div>
+            <p id="color1-name">Red</p>
+          </div>
+          <div class="color-swatch">
+            <div id="color2" class="color-display"></div>
+            <p id="color2-name">Yellow</p>
+          </div>
+        </div>
+
+        <div id="slider-section">
+          <input type="range" id="mix-slider" min="0" max="10" value="5" />
+          <p id="percentage">50%</p>
+        </div>
+
+        <button id="submit-color-btn">Submit Color</button>
+      </div>
+
+      <!-- Score Section -->
+      <div id="score-section">
+        <p>Score: <span id="current-score">0</span></p>
+      </div>
+    </div>
+
+    <!-- Target Color Modal -->
+    <div id="target-modal" class="modal hidden">
+      <div id="target-color-display"></div>
+      <button id="start-mixing-btn">Start Mixing</button>
+    </div>
+
     <script src="js/main.js"></script>
   </body>
 </html>
