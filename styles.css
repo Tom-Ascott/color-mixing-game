@@ -1,0 +1,184 @@
+/* ==============================================
+   COLOR MIXING GAME - STYLESHEET
+   ============================================== */
+
+/* Reset all browser default spacing and sizing */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* Base styling for the entire page */
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background-color: #f5f5f5; /* Light gray background */
+  color: #333333; /* Dark gray text */
+  line-height: 1.6; /* Spacing between lines */
+}
+
+/* ==============================================
+   SCREEN MANAGEMENT SYSTEM
+   ============================================== */
+
+/* Container for each game screen (welcome, game, etc.) */
+.screen {
+  max-width: 600px; /* Limit width for readability */
+  margin: 0 auto; /* Center the content */
+  padding: 20px; /* Space around content */
+  text-align: center; /* Center align text */
+}
+
+/* Hide screens that aren't currently active */
+.hidden {
+  display: none;
+}
+
+/* ==============================================
+   WELCOME SCREEN STYLING
+   ============================================== */
+
+/* Main game title */
+#welcome-screen h1 {
+  font-size: 2.5rem; /* Large, prominent text */
+  margin-bottom: 1rem; /* Space below title */
+  color: #2196f3; /* Material Blue - our brand color */
+}
+
+/* Subtitle description */
+#welcome-screen p {
+  font-size: 1.2rem; /* Slightly larger than normal text */
+  margin-bottom: 2rem; /* Extra space before button */
+  color: #666; /* Medium gray for secondary text */
+}
+
+/* ==============================================
+   BUTTON STYLING
+   ============================================== */
+
+/* All buttons get this base styling */
+button {
+  background-color: #2196f3; /* Material Blue - consistent brand color */
+  color: white; /* White text for contrast */
+  border: none; /* Remove default button border */
+  padding: 12px 24px; /* Comfortable touch target (44px+ total) */
+  font-size: 1.1rem; /* Slightly larger text */
+  border-radius: 8px; /* Rounded corners for modern look */
+  cursor: pointer; /* Show it's clickable */
+  transition: background-color 0.3s; /* Smooth color change on hover */
+}
+
+/* Darker blue when hovering over button */
+button:hover {
+  background-color: #1976d2; /* Darker shade of our brand blue */
+}
+
+/* Slight shrink effect when clicking button */
+button:active {
+  transform: scale(0.95); /* 95% size = pressed feeling */
+}
+
+/* ==============================================
+   GAME SCREEN LAYOUT
+   ============================================== */
+
+/* Header area with round info and color name */
+#game-header {
+  margin-bottom: 2rem; /* Space before mixing interface */
+}
+
+/* "Round X of 6" text */
+#round-info {
+  font-size: 1.5rem;
+  margin-bottom: 0.5rem;
+}
+
+/* Fancy color name like "Venetian Sunset" */
+#color-name {
+  font-size: 1.8rem;
+  color: #2196f3; /* Brand blue to make it special */
+  font-style: italic; /* Elegant italic for fancy names */
+}
+
+/* ==============================================
+   COLOR MIXING INTERFACE
+   ============================================== */
+
+/* Container for the two color squares */
+#color-swatches {
+  display: flex; /* Side-by-side layout */
+  justify-content: center; /* Center the pair */
+  gap: 2rem; /* Space between the two colors */
+  margin: 2rem 0; /* Space above and below */
+}
+
+/* Individual color + label container */
+.color-swatch {
+  text-align: center;
+}
+
+/* The actual color square */
+.color-display {
+  width: 80px; /* Large enough to see color clearly */
+  height: 80px; /* Square shape */
+  border-radius: 12px; /* Rounded corners */
+  border: 3px solid #ddd; /* Light border to define edges */
+  margin-bottom: 0.5rem; /* Space before color name */
+}
+
+/* ==============================================
+   SLIDER CONTROLS
+   ============================================== */
+
+/* Container for slider and percentage */
+#slider-section {
+  margin: 2rem 0; /* Space above and below */
+}
+
+/* The mixing slider itself */
+#mix-slider {
+  width: 300px; /* Wide enough for precise control */
+  height: 8px; /* Thick enough to grab easily */
+  margin-bottom: 1rem; /* Space before percentage */
+}
+
+/* Percentage display below slider */
+#percentage {
+  font-size: 1.2rem;
+  font-weight: bold; /* Make percentage stand out */
+}
+
+/* ==============================================
+   SCORE DISPLAY
+   ============================================== */
+
+#score-section {
+  margin-top: 2rem; /* Space from mixing interface */
+  font-size: 1.2rem; /* Larger text for important info */
+}
+
+/* ==============================================
+   TARGET COLOR MODAL
+   ============================================== */
+
+/* Full-screen overlay for target color */
+.modal {
+  position: fixed; /* Stay in place when scrolling */
+  top: 0;
+  left: 0;
+  width: 100%; /* Cover entire screen */
+  height: 100%; /* Cover entire screen */
+  background-color: rgba(0, 0, 0, 0.8); /* Semi-transparent black */
+  display: flex; /* Center content vertically and horizontally */
+  flex-direction: column; /* Stack items vertically */
+  justify-content: center; /* Center vertically */
+  align-items: center; /* Center horizontally */
+}
+
+/* Large target color square in modal */
+#target-color-display {
+  width: 300px; /* Large so you can study the color */
+  height: 300px; /* Square shape */
+  border-radius: 20px; /* Rounded corners */
+  margin-bottom: 2rem; /* Space before button */
+}
