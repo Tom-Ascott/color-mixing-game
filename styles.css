@@ -169,7 +169,7 @@ button:active {
   width: 100%; /* Cover entire screen */
   height: 100%; /* Cover entire screen */
   background-color: rgba(0, 0, 0, 0.8); /* Semi-transparent black */
-  display: flex; /* Center content vertically and horizontally */
+  display: none; /* Center content vertically and horizontally */
   flex-direction: column; /* Stack items vertically */
   justify-content: center; /* Center vertically */
   align-items: center; /* Center horizontally */
