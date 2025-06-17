@@ -39,8 +39,15 @@ document.addEventListener("DOMContentLoaded", function () {
  * Initialize a new game with specified painting
  * @param {string} paintingId - ID of painting to load
  */
-function initializeGame(paintingId = "girlWithPearl") {
-  console.log(`Initializing game with painting: ${paintingId}`);
+function initializeGame(paintingId = null) {
+  console.log(`Initializing game...`);
+
+  // If no specific painting ID, use the first available one
+  if (!paintingId) {
+    const availablePaintings = Object.keys(PAINTINGS);
+    paintingId = availablePaintings[0];
+    console.log(`Auto-selected painting: ${paintingId}`);
+  }
 
   // Load painting data
   gameState.currentPainting = PAINTINGS[paintingId];
@@ -157,7 +164,7 @@ function setupGame() {
   if (slider) slider.addEventListener("input", updateSlider);
 
   // Initialize the game data
-  const success = initializeGame("girlWithPearl");
+  const success = initializeGame();
 
   if (success) {
     console.log("Game setup complete!");
@@ -386,6 +393,12 @@ function submitColor() {
     // NEW: Reveal pixels on canvas for completed color
     revealColorOnCanvas(gameState.currentColorGroupIndex, mixed);
 
+    // Show score and painting sections after first color completion
+    if (gameState.completedColors.length === 1) {
+      document.getElementById("score-section").classList.remove("hidden");
+      document.getElementById("painting-section").classList.remove("hidden");
+    }
+
     // Move to next color
     gameState.currentColorGroupIndex++;
     gameState.currentStage = 1; // Reset stage for next color
@@ -395,6 +408,9 @@ function submitColor() {
       gameState.currentColorGroupIndex >=
       gameState.currentPainting.colorGroups.length
     ) {
+      document.getElementById("painting-section-title").textContent =
+        "Your Masterpiece!";
+      s;
       // Game complete!
       showGameMessage(
         "Game Complete!",
@@ -403,6 +419,10 @@ function submitColor() {
           console.log("Game completion message dismissed");
         }
       );
+
+      // Disable mixing interface after game completion
+      document.getElementById("mixing-section").classList.add("hidden");
+      document.getElementById("target-section").classList.add("hidden");
       // TODO: Show completion screen later
     } else {
       // Load next color

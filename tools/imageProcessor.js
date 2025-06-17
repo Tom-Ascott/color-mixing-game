@@ -231,7 +231,7 @@ function displayColorPalette(colors) {
 }
 
 /**
- * Generate the complete game data structure
+ * Generate the complete game data structure with dynamic painting name
  */
 function generateGameData() {
   if (!loadedImage) {
@@ -240,6 +240,21 @@ function generateGameData() {
   }
 
   console.log("Generating game data...");
+
+  // GET PAINTING NAME FROM INPUT FIELD
+  const paintingNameInput = document
+    .getElementById("paintingName")
+    .value.trim();
+  const paintingName = paintingNameInput || "Untitled Painting";
+
+  // Generate a safe JavaScript variable name from the painting name
+  const paintingId = paintingName
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, "") // Remove special characters
+    .replace(/\s+/g, ""); // Remove spaces
+
+  console.log("Using painting name:", paintingName);
+  console.log("Generated painting ID:", paintingId);
 
   // Create temporary 50x50 canvas to get exact pixel mapping
   const tempCanvas = document.createElement("canvas");
@@ -322,18 +337,19 @@ function generateGameData() {
     );
   }
 
-  // Generate the complete painting data structure
+  // FIXED: Generate the complete painting data structure with DYNAMIC naming
   const paintingData = {
-    girlWithPearl: {
-      id: "girl_pearl_earring",
-      name: "Girl with a Pearl Earring",
+    [paintingId]: {
+      // ← DYNAMIC KEY from input
+      id: paintingId, // ← DYNAMIC ID
+      name: paintingName, // ← DYNAMIC NAME from input field
       dimensions: { width: 50, height: 50 },
       colorGroups: colorGroups,
     },
   };
 
-  // Display the generated data
-  displayGeneratedData(paintingData);
+  // Display the generated data with proper naming
+  displayGeneratedData(paintingData, paintingName);
 }
 
 /**
@@ -385,13 +401,15 @@ function generateMixingRecipe(targetColor) {
 
 /**
  * Display the final generated game data in correct JavaScript format
+ * @param {Object} paintingData - The generated painting data object
+ * @param {string} paintingName - The name of the painting for header
  */
-function displayGeneratedData(paintingData) {
+function displayGeneratedData(paintingData, paintingName) {
   const output = document.getElementById("output");
 
-  // Convert to proper JavaScript file format
+  // Convert to proper JavaScript file format with DYNAMIC painting name
   const jsFileContent = `/* ==============================================
-   REAL PAINTING DATA - GIRL WITH A PEARL EARRING
+   REAL PAINTING DATA - ${paintingName.toUpperCase()}
    Generated from actual painting image
    ============================================== */
 
@@ -402,11 +420,32 @@ window.PAINTINGS = PAINTINGS;`;
 
   output.innerHTML = `
         <h4>Complete paintingData.js File:</h4>
+        <p><strong>Painting:</strong> ${paintingName}</p>
         <p>Copy this entire content to replace your paintingData.js file:</p>
         <textarea style="width: 100%; height: 400px; font-family: monospace;" readonly>${jsFileContent}</textarea>
         <button onclick="copyToClipboard()" style="margin-top: 10px;">Copy Complete File</button>
     `;
+
+  console.log(`Generated complete data file for: ${paintingName}`);
 }
+
+// Convert to proper JavaScript file format
+const jsFileContent = `/* ==============================================
+   REAL PAINTING DATA - GIRL WITH A PEARL EARRING
+   Generated from actual painting image
+   ============================================== */
+
+const PAINTINGS = ${JSON.stringify(paintingData, null, 2)};
+
+// Export for use in other files  
+window.PAINTINGS = PAINTINGS;`;
+
+output.innerHTML = `
+        <h4>Complete paintingData.js File:</h4>
+        <p>Copy this entire content to replace your paintingData.js file:</p>
+        <textarea style="width: 100%; height: 400px; font-family: monospace;" readonly>${jsFileContent}</textarea>
+        <button onclick="copyToClipboard()" style="margin-top: 10px;">Copy Complete File</button>
+    `;
 
 /**
  * Copy generated data to clipboard

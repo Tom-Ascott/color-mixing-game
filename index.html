@@ -50,18 +50,19 @@
         <button id="submit-color-btn">Submit Color</button>
       </div>
 
-      <!-- Score Section -->
-      <div id="score-section">
-        <p>Score: <span id="current-score">0</span></p>
+    
+        <!-- Score Section -->
+        <div id="score-section" class="hidden">
+          <p>Score: <span id="current-score">0</span></p>
+        </div>
       </div>
     </div>
 
     <!-- Painting Canvas Section -->
-    <div id="painting-section">
-      <h4>Your Painting Progress:</h4>
-      <canvas id="painting-canvas" width="300" height="300"></canvas>
-      <p id="painting-progress">0 of 4 colors completed</p>
-    </div>
+  <div id="painting-section" class="hidden">
+  <h4 id="painting-section-title">Your Painting Progress:</h4>
+  <canvas id="painting-canvas" width="300" height="300"></canvas>
+</div>
 
     <!-- Game Message Overlay -->
     <div id="message-overlay" class="message-overlay hidden">
