@@ -140,6 +140,9 @@ function updateGameUI() {
  * Initialize the game interface and event listeners
  */
 function setupGame() {
+  // Initialize painting canvas
+  paintingCanvas = new PaintingCanvas("painting-canvas");
+  paintingCanvas.testDraw(); // This will show 4 colored pixels in corners
   // Set up all event listeners
   const startGameBtn = document.getElementById("start-game-btn");
   const startMixingBtn = document.getElementById("start-mixing-from-target");
@@ -380,6 +383,9 @@ function submitColor() {
     });
     gameState.totalScore += score;
 
+    // NEW: Reveal pixels on canvas for completed color
+    revealColorOnCanvas(gameState.currentColorGroupIndex, mixed);
+
     // Move to next color
     gameState.currentColorGroupIndex++;
     gameState.currentStage = 1; // Reset stage for next color
@@ -390,7 +396,13 @@ function submitColor() {
       gameState.currentPainting.colorGroups.length
     ) {
       // Game complete!
-      alert(`Game Complete! Total Score: ${gameState.totalScore}`);
+      showGameMessage(
+        "Game Complete!",
+        `Amazing work! Final Score: ${gameState.totalScore}`,
+        function () {
+          console.log("Game completion message dismissed");
+        }
+      );
       // TODO: Show completion screen later
     } else {
       // Load next color
@@ -401,4 +413,22 @@ function submitColor() {
       document.getElementById("target-section").classList.remove("hidden");
     }
   }
+}
+
+/**
+ * Reveal pixels on canvas when a color is completed
+ */
+function revealColorOnCanvas(colorGroupIndex, finalColor) {
+  const colorGroup = gameState.currentPainting.colorGroups[colorGroupIndex];
+
+  console.log(
+    `Revealing ${colorGroup.pixels.length} pixels for ${colorGroup.name}`
+  );
+
+  // Draw each pixel for this color group
+  colorGroup.pixels.forEach(([x, y]) => {
+    paintingCanvas.drawPixel(x, y, finalColor);
+  });
+
+  console.log("Pixels revealed on canvas");
 }

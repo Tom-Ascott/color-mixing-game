@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Painting Image Processor</title>
+    <style>
+      body {
+        font-family: system-ui, sans-serif;
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 20px;
+        background: #f5f5f5;
+      }
+      .container {
+        background: white;
+        border-radius: 12px;
+        padding: 30px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      }
+      h1 {
+        color: #2196f3;
+      }
+      canvas {
+        border: 2px solid #ddd;
+        margin: 10px;
+        border-radius: 8px;
+      }
+      .step {
+        margin: 20px 0;
+        padding: 20px;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+      }
+      button {
+        background: #2196f3;
+        color: white;
+        border: none;
+        padding: 12px 24px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 16px;
+      }
+      button:hover {
+        background: #1976d2;
+      }
+      #output {
+        background: #f9f9f9;
+        padding: 15px;
+        border-radius: 8px;
+        font-family: monospace;
+        white-space: pre-wrap;
+        max-height: 400px;
+        overflow-y: auto;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>🎨 Painting Image Processor</h1>
+      <p>Convert images into color mixing game data</p>
+
+      <div class="step">
+        <h3>Step 1: Image & Painting Info</h3>
+        <div style="margin-bottom: 15px">
+          <label
+            for="paintingName"
+            style="display: block; margin-bottom: 5px; font-weight: bold"
+            >Painting Name:</label
+          >
+          <input
+            type="text"
+            id="paintingName"
+            placeholder="e.g., Girl with a Pearl Earring"
+            style="
+              width: 300px;
+              padding: 8px;
+              border: 1px solid #ddd;
+              border-radius: 4px;
+            "
+          />
+        </div>
+        <div>
+          <label
+            for="imageInput"
+            style="display: block; margin-bottom: 5px; font-weight: bold"
+            >Select Image:</label
+          >
+          <input type="file" id="imageInput" accept="image/*" />
+        </div>
+        <canvas id="originalCanvas" width="300" height="300"></canvas>
+      </div>
+
+      <div class="step">
+        <h3>Step 2: Resize to 50x50</h3>
+        <button onclick="resizeImage()">Resize Image</button>
+        <canvas id="resizedCanvas" width="250" height="250"></canvas>
+      </div>
+
+      <div class="step">
+        <h3>Step 3: Extract & Quantize Colors</h3>
+        <button onclick="processColors()">Process Colors</button>
+        <div id="colorPalette"></div>
+      </div>
+
+      <div class="step">
+        <h3>Step 4: Generate Game Data</h3>
+        <button onclick="generateGameData()">Generate Data</button>
+        <div id="output"></div>
+      </div>
+    </div>
+
+    <script src="imageProcessor.js"></script>
+  </body>
+</html>
