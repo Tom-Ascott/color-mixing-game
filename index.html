@@ -24,7 +24,9 @@
 
       <!-- Target Color Section -->
       <div id="target-section">
-        <button id="view-target-btn">View Target Color</button>
+        <h4>Target Color:</h4>
+        <div id="target-color-preview"></div>
+        <button id="start-mixing-from-target">Start Mixing</button>
       </div>
 
       <!-- Mixing Section -->
@@ -51,6 +53,18 @@
       <!-- Score Section -->
       <div id="score-section">
         <p>Score: <span id="current-score">0</span></p>
+      </div>
+    </div>
+
+    <!-- Game Message Overlay -->
+    <div id="message-overlay" class="message-overlay hidden">
+      <div class="message-box">
+        <h3 id="message-title">Stage Complete!</h3>
+        <p id="message-text">Mixed color details here...</p>
+        <div class="message-controls">
+          <button id="message-continue">Continue</button>
+          <p class="message-hint">Press ENTER or SPACE to continue</p>
+        </div>
       </div>
     </div>
 

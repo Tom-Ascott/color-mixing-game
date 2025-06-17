@@ -8,7 +8,6 @@ const PAINTINGS = {
     name: "Girl with a Pearl Earring",
     dimensions: { width: 50, height: 50 },
 
-    // Color groups that make up the painting
     colorGroups: [
       {
         id: 1,
@@ -17,8 +16,8 @@ const PAINTINGS = {
         stages: [
           {
             colors: [
-              { r: 255, g: 0, b: 0 }, // Red base
-              { r: 255, g: 255, b: 0 }, // Yellow
+              { r: 255, g: 0, b: 0, name: "Red" }, // Red base
+              { r: 255, g: 255, b: 0, name: "Yellow" }, // Yellow
             ],
           },
         ],
@@ -30,8 +29,8 @@ const PAINTINGS = {
         stages: [
           {
             colors: [
-              { r: 0, g: 0, b: 255 }, // Blue base
-              { r: 0, g: 0, b: 0 }, // Black to darken
+              { r: 0, g: 0, b: 255, name: "Blue" }, // Blue base
+              { r: 0, g: 0, b: 0, name: "Black" }, // Black to darken
             ],
           },
         ],
@@ -43,8 +42,8 @@ const PAINTINGS = {
         stages: [
           {
             colors: [
-              { r: 255, g: 255, b: 255 }, // White base
-              { r: 255, g: 255, b: 0 }, // Tiny bit of yellow warmth
+              { r: 255, g: 255, b: 255, name: "White" }, // White base
+              { r: 255, g: 255, b: 0, name: "Yellow" }, // Tiny bit of yellow warmth
             ],
           },
         ],
@@ -56,20 +55,18 @@ const PAINTINGS = {
         stages: [
           {
             colors: [
-              { r: 255, g: 0, b: 0 }, // Red base
-              { r: 255, g: 255, b: 255 }, // White to make pink
+              { r: 255, g: 0, b: 0, name: "Red" }, // Red base
+              { r: 255, g: 255, b: 255, name: "White" }, // White to make pink
             ],
           },
           {
             colors: [
-              null, // null = use previous stage result
-              { r: 100, g: 50, b: 150 }, // Purple to add shadow
+              null, // null = use previous stage result, name will be "Previous Mix"
+              { r: 100, g: 50, b: 150, name: "Purple" }, // Purple to add shadow
             ],
           },
         ],
       },
-      // We can add the other colors later
-      // We can add the other 3 colors later
     ],
   },
 };

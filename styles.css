@@ -166,6 +166,27 @@ button:active {
 }
 
 /* ==============================================
+   DIRECT TARGET COLOR DISPLAY
+   ============================================== */
+
+/* Target color preview (replaces modal) */
+#target-color-preview {
+  width: 200px;
+  height: 200px;
+  border-radius: 20px;
+  border: 4px solid #ddd;
+  margin: 1rem auto 2rem auto;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Target section header */
+#target-section h4 {
+  color: #2196f3;
+  margin-bottom: 1rem;
+  font-size: 1.2rem;
+}
+
+/* ==============================================
    TARGET COLOR MODAL
    ============================================== */
 
@@ -189,4 +210,76 @@ button:active {
   height: 300px; /* Square shape */
   border-radius: 20px; /* Rounded corners */
   margin-bottom: 2rem; /* Space before button */
+}
+/* ==============================================
+   GAME MESSAGE SYSTEM
+   ============================================== */
+
+/* Full-screen overlay for game messages */
+.message-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.7); /* Darker overlay */
+  display: none; /* Hidden by default */
+  justify-content: center;
+  align-items: center;
+  z-index: 1000; /* Above everything else */
+}
+
+/* Show the overlay when not hidden */
+.message-overlay:not(.hidden) {
+  display: flex;
+}
+
+/* The message box itself */
+.message-box {
+  background: white;
+  border-radius: 20px;
+  padding: 2rem;
+  max-width: 400px;
+  text-align: center;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  transform: scale(0.9);
+  opacity: 0;
+  transition: all 0.3s ease;
+}
+
+/* Animate in when shown */
+.message-overlay:not(.hidden) .message-box {
+  transform: scale(1);
+  opacity: 1;
+}
+
+/* Message title */
+#message-title {
+  color: #2196f3;
+  margin-bottom: 1rem;
+  font-size: 1.5rem;
+}
+
+/* Message text */
+#message-text {
+  margin-bottom: 1.5rem;
+  line-height: 1.6;
+}
+
+/* Controls section */
+.message-controls {
+  border-top: 1px solid #eee;
+  padding-top: 1rem;
+}
+
+/* Continue button */
+#message-continue {
+  margin-bottom: 0.5rem;
+}
+
+/* Keyboard hint */
+.message-hint {
+  font-size: 0.9rem;
+  color: #666;
+  margin: 0;
 }

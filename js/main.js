@@ -127,6 +127,13 @@ function updateGameUI() {
 
   // Update color swatches
   updateColorDisplay();
+
+  // Show target color directly
+  const targetPreview = document.getElementById("target-color-preview");
+  if (targetPreview) {
+    const target = gameState.currentMix.target;
+    targetPreview.style.backgroundColor = `rgb(${target.r}, ${target.g}, ${target.b})`;
+  }
 }
 
 /**
@@ -135,13 +142,13 @@ function updateGameUI() {
 function setupGame() {
   // Set up all event listeners
   const startGameBtn = document.getElementById("start-game-btn");
-  const viewTargetBtn = document.getElementById("view-target-btn");
-  const startMixingBtn = document.getElementById("start-mixing-btn");
+  const startMixingBtn = document.getElementById("start-mixing-from-target");
   const submitBtn = document.getElementById("submit-color-btn");
   const slider = document.getElementById("mix-slider");
 
   if (startGameBtn) startGameBtn.addEventListener("click", startGame);
-  if (viewTargetBtn) viewTargetBtn.addEventListener("click", showTargetColor);
+  if (startMixingBtn)
+    startMixingBtn.addEventListener("click", startMixingFromTarget);
   if (startMixingBtn) startMixingBtn.addEventListener("click", startMixing);
   if (submitBtn) submitBtn.addEventListener("click", submitColor);
   if (slider) slider.addEventListener("input", updateSlider);
@@ -154,6 +161,58 @@ function setupGame() {
   } else {
     console.error("Failed to initialize game!");
   }
+}
+
+/* ==============================================
+   MODERN MESSAGE SYSTEM
+   ============================================== */
+
+/**
+ * Show a game message with modern overlay (replaces alert boxes)
+ * @param {string} title - Message title
+ * @param {string} text - Message content
+ * @param {function} callback - Function to run when user continues
+ */
+function showGameMessage(title, text, callback) {
+  // Set message content
+  document.getElementById("message-title").textContent = title;
+  document.getElementById("message-text").textContent = text;
+
+  // Show overlay
+  const overlay = document.getElementById("message-overlay");
+  overlay.classList.remove("hidden");
+
+  // Handle continue button
+  const continueBtn = document.getElementById("message-continue");
+  const newContinueBtn = continueBtn.cloneNode(true); // Remove old listeners
+  continueBtn.parentNode.replaceChild(newContinueBtn, continueBtn);
+
+  newContinueBtn.addEventListener("click", function () {
+    hideGameMessage();
+    if (callback) callback();
+  });
+
+  // Handle keyboard shortcuts (Enter/Space)
+  function handleKeyPress(event) {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      hideGameMessage();
+      document.removeEventListener("keydown", handleKeyPress);
+      if (callback) callback();
+    }
+  }
+
+  document.addEventListener("keydown", handleKeyPress);
+
+  // Focus the continue button for accessibility
+  newContinueBtn.focus();
+}
+
+/**
+ * Hide the game message overlay
+ */
+function hideGameMessage() {
+  document.getElementById("message-overlay").classList.add("hidden");
 }
 
 /**
@@ -170,21 +229,16 @@ function startGame() {
 }
 
 /**
- * Show the target color in full-screen modal
+ * Start mixing directly from target display (replaces modal flow)
  */
-function showTargetColor() {
-  console.log("Showing target color...");
+function startMixingFromTarget() {
+  console.log("Starting mixing from target display...");
 
-  const modal = document.getElementById("target-modal");
-  const targetDisplay = document.getElementById("target-color-display");
+  // Hide the target section
+  document.getElementById("target-section").classList.add("hidden");
 
-  // Set the target color background
-  const target = gameState.currentMix.target;
-  targetDisplay.style.backgroundColor = `rgb(${target.r}, ${target.g}, ${target.b})`;
-
-  // Show modal by removing hidden class and setting display
-  modal.classList.remove("hidden");
-  modal.style.display = "flex";
+  // Show the mixing section
+  document.getElementById("mixing-section").classList.remove("hidden");
 }
 
 /**
@@ -217,7 +271,7 @@ function updateSlider() {
 }
 
 /**
- * Update the color swatch displays
+ * Update the color swatch displays and names
  */
 function updateColorDisplay() {
   const color1Display = document.getElementById("color1");
@@ -229,6 +283,23 @@ function updateColorDisplay() {
 
     color1Display.style.backgroundColor = `rgb(${c1.r}, ${c1.g}, ${c1.b})`;
     color2Display.style.backgroundColor = `rgb(${c2.r}, ${c2.g}, ${c2.b})`;
+
+    // Update color names from data
+    const colorGroup =
+      gameState.currentPainting.colorGroups[gameState.currentColorGroupIndex];
+    const stage = colorGroup.stages[gameState.currentStage - 1];
+    const color1Name = document.getElementById("color1-name");
+    const color2Name = document.getElementById("color2-name");
+
+    if (gameState.currentStage === 1) {
+      // First stage - use names from painting data
+      color1Name.textContent = stage.colors[0].name;
+      color2Name.textContent = stage.colors[1].name;
+    } else {
+      // Later stages - first color is previous mix
+      color1Name.textContent = "Previous Mix";
+      color2Name.textContent = stage.colors[1].name;
+    }
   }
 }
 
@@ -271,10 +342,12 @@ function submitColor() {
     loadCurrentColor();
 
     // Show stage completion message
-    alert(
-      `Stage ${gameState.currentStage - 1} complete! Mixed: rgb(${mixed.r}, ${
-        mixed.g
-      }, ${mixed.b})\n\nNow starting Stage ${gameState.currentStage}...`
+    showGameMessage(
+      `Stage ${gameState.currentStage - 1} Complete!`,
+      `Great mix! Now starting Stage ${gameState.currentStage}...`,
+      function () {
+        console.log("Stage message dismissed");
+      }
     );
   } else {
     // Final stage: Calculate score against target
@@ -290,10 +363,42 @@ function submitColor() {
     console.log("Final score:", score);
 
     // Show final results
-    alert(
-      `Color complete! You scored ${score} points!\nFinal color: rgb(${mixed.r}, ${mixed.g}, ${mixed.b})`
+
+    showGameMessage(
+      `Color Complete!`,
+      `You scored ${score} points!\nGreat color mixing!`,
+      function () {
+        console.log("Color completion message dismissed");
+      }
     );
 
-    // TODO: Move to next color or end game
+    // Store completed color and score
+    gameState.completedColors.push({
+      colorName: colorGroup.name,
+      score: score,
+      finalColor: mixed,
+    });
+    gameState.totalScore += score;
+
+    // Move to next color
+    gameState.currentColorGroupIndex++;
+    gameState.currentStage = 1; // Reset stage for next color
+
+    // Check if game is complete
+    if (
+      gameState.currentColorGroupIndex >=
+      gameState.currentPainting.colorGroups.length
+    ) {
+      // Game complete!
+      alert(`Game Complete! Total Score: ${gameState.totalScore}`);
+      // TODO: Show completion screen later
+    } else {
+      // Load next color
+      loadCurrentColor();
+
+      // Hide mixing interface, show target button again
+      document.getElementById("mixing-section").classList.add("hidden");
+      document.getElementById("target-section").classList.remove("hidden");
+    }
   }
 }
