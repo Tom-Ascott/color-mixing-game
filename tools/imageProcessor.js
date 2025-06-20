@@ -231,7 +231,8 @@ function displayColorPalette(colors) {
 }
 
 /**
- * Generate the complete game data structure with dynamic painting name
+ * Generate the complete game data structure with multi-stage support
+ * REPLACE the existing generateGameData() function in tools/imageProcessor.js
  */
 function generateGameData() {
   if (!loadedImage) {
@@ -239,7 +240,7 @@ function generateGameData() {
     return;
   }
 
-  console.log("Generating game data...");
+  console.log("Generating game data with multi-stage support...");
 
   // GET PAINTING NAME FROM INPUT FIELD
   const paintingNameInput = document
@@ -314,6 +315,9 @@ function generateGameData() {
       "Midnight Turban", // Blue turban
     ];
 
+    // NEW: Generate stages based on color index (makes color 4 multi-stage)
+    const stages = generateStagesForColor(colorIndex, targetColor);
+
     colorGroups.push({
       id: colorIndex + 1,
       name: colorNames[colorIndex],
@@ -323,26 +327,21 @@ function generateGameData() {
         b: targetColor.b,
       },
       pixels: pixelCoordinates,
-      stages: [
-        {
-          colors: generateMixingRecipe(targetColor),
-        },
-      ],
+      stages: stages, // Now uses the enhanced stage generator
     });
 
     console.log(
       `Color ${colorIndex + 1}: ${colorNames[colorIndex]} - ${
         pixelCoordinates.length
-      } pixels`
+      } pixels - ${stages.length} stage(s)`
     );
   }
 
-  // FIXED: Generate the complete painting data structure with DYNAMIC naming
+  // Generate the complete painting data structure with DYNAMIC naming
   const paintingData = {
     [paintingId]: {
-      // ← DYNAMIC KEY from input
-      id: paintingId, // ← DYNAMIC ID
-      name: paintingName, // ← DYNAMIC NAME from input field
+      id: paintingId,
+      name: paintingName,
       dimensions: { width: 50, height: 50 },
       colorGroups: colorGroups,
     },
@@ -350,6 +349,38 @@ function generateGameData() {
 
   // Display the generated data with proper naming
   displayGeneratedData(paintingData, paintingName);
+}
+
+/**
+ * Generate stages for a color - makes color 4 multi-stage for testing
+ * ADD this new function after the existing generateMixingRecipe() function
+ */
+function generateStagesForColor(colorIndex, targetColor) {
+  // Make color 4 (index 3) multi-stage to fix the bug
+  if (colorIndex === 3) {
+    // Color 4: Midnight Turban (blue) - 2 stages
+    return [
+      {
+        colors: [
+          { r: 0, g: 0, b: 255, name: "Bright Blue" },
+          { r: 0, g: 0, b: 100, name: "Navy Blue" },
+        ],
+      },
+      {
+        colors: [
+          "previous", // Result from stage 1
+          { r: 50, g: 50, b: 50, name: "Charcoal" },
+        ],
+      },
+    ];
+  } else {
+    // Colors 1, 2, and 3 remain single-stage
+    return [
+      {
+        colors: generateMixingRecipe(targetColor),
+      },
+    ];
+  }
 }
 
 /**

@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Painting Image Processor</title>
+    <title>Painting Image Processor - Difficulty Modes</title>
     <style>
       body {
         font-family: system-ui, sans-serif;
@@ -32,6 +32,10 @@
         border: 1px solid #ddd;
         border-radius: 8px;
       }
+      .step.disabled {
+        opacity: 0.5;
+        pointer-events: none;
+      }
       button {
         background: #2196f3;
         color: white;
@@ -40,10 +44,86 @@
         border-radius: 8px;
         cursor: pointer;
         font-size: 16px;
+        margin: 5px;
       }
-      button:hover {
+      button:hover:not(:disabled) {
         background: #1976d2;
       }
+      button:disabled {
+        background: #ccc;
+        cursor: not-allowed;
+      }
+
+      /* Difficulty-specific button styling */
+      .easy-btn {
+        background: #4caf50;
+      }
+      .easy-btn:hover {
+        background: #45a049;
+      }
+
+      .normal-btn {
+        background: #ff9800;
+      }
+      .normal-btn:hover {
+        background: #e68900;
+      }
+
+      .hard-btn {
+        background: #f44336;
+      }
+      .hard-btn:hover {
+        background: #da190b;
+      }
+
+      .difficulty-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 20px;
+        margin: 20px 0;
+      }
+
+      .difficulty-card {
+        border: 2px solid #ddd;
+        border-radius: 12px;
+        padding: 20px;
+        text-align: center;
+        transition: border-color 0.3s;
+        cursor: pointer;
+      }
+
+      .difficulty-card:hover {
+        border-color: #2196f3;
+      }
+
+      .difficulty-card h4 {
+        margin-top: 0;
+        color: #333;
+      }
+
+      .difficulty-stats {
+        font-size: 14px;
+        color: #666;
+        margin: 10px 0;
+      }
+
+      .input-group {
+        margin: 15px 0;
+      }
+
+      .input-group label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: bold;
+      }
+
+      .input-group input {
+        width: 300px;
+        padding: 8px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+      }
+
       #output {
         background: #f9f9f9;
         padding: 15px;
@@ -53,63 +133,841 @@
         max-height: 400px;
         overflow-y: auto;
       }
+
+      .selected-difficulty {
+        border-color: #2196f3 !important;
+        background-color: #f3f9ff;
+      }
+
+      .step-status {
+        display: inline-block;
+        padding: 4px 8px;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: bold;
+        margin-left: 10px;
+      }
+
+      .status-pending {
+        background: #ffeaa7;
+        color: #d63031;
+      }
+
+      .status-complete {
+        background: #00b894;
+        color: white;
+      }
     </style>
   </head>
   <body>
     <div class="container">
-      <h1>🎨 Painting Image Processor</h1>
-      <p>Convert images into color mixing game data</p>
+      <h1>🎨 Painting Image Processor - Difficulty Modes</h1>
+      <p>
+        Convert images into color mixing game data with multiple difficulty
+        levels
+      </p>
 
-      <div class="step">
-        <h3>Step 1: Image & Painting Info</h3>
-        <div style="margin-bottom: 15px">
-          <label
-            for="paintingName"
-            style="display: block; margin-bottom: 5px; font-weight: bold"
-            >Painting Name:</label
-          >
+      <div class="step" id="step1">
+        <h3>
+          Step 1: Painting Information
+          <span class="step-status status-pending" id="status1">Required</span>
+        </h3>
+
+        <div class="input-group">
+          <label for="artistName">Artist Name:</label>
+          <input
+            type="text"
+            id="artistName"
+            placeholder="e.g., Johannes Vermeer"
+          />
+        </div>
+
+        <div class="input-group">
+          <label for="paintingName">Painting Name:</label>
           <input
             type="text"
             id="paintingName"
             placeholder="e.g., Girl with a Pearl Earring"
-            style="
-              width: 300px;
-              padding: 8px;
-              border: 1px solid #ddd;
-              border-radius: 4px;
-            "
           />
         </div>
-        <div>
-          <label
-            for="imageInput"
-            style="display: block; margin-bottom: 5px; font-weight: bold"
-            >Select Image:</label
-          >
+
+        <div class="input-group">
+          <label for="imageInput">Select Image:</label>
           <input type="file" id="imageInput" accept="image/*" />
         </div>
+
         <canvas id="originalCanvas" width="300" height="300"></canvas>
       </div>
 
-      <div class="step">
-        <h3>Step 2: Resize to 50x50</h3>
-        <button onclick="resizeImage()">Resize Image</button>
+      <div class="step disabled" id="step2">
+        <h3>
+          Step 2: Resize to 50x50
+          <span class="step-status status-pending" id="status2">Waiting</span>
+        </h3>
+        <button onclick="resizeImage()" id="resize-btn" disabled>
+          Resize Image
+        </button>
         <canvas id="resizedCanvas" width="250" height="250"></canvas>
       </div>
 
-      <div class="step">
-        <h3>Step 3: Extract & Quantize Colors</h3>
-        <button onclick="processColors()">Process Colors</button>
+      <div class="step disabled" id="step3">
+        <h3>
+          Step 3: Choose Game Difficulty
+          <span class="step-status status-pending" id="status3">Waiting</span>
+        </h3>
+        <p>
+          Select the difficulty level - this determines color count and mixing
+          complexity:
+        </p>
+
+        <div class="difficulty-grid">
+          <div
+            class="difficulty-card"
+            id="easy-card"
+            onclick="selectDifficulty('easy')"
+          >
+            <h4>🟢 Easy Mode</h4>
+            <div class="difficulty-stats">
+              <strong>5 Colors</strong><br />
+              1 Stage Each<br />
+              Simple A + B = C mixing
+            </div>
+            <p style="font-size: 12px; color: #666">
+              Perfect for beginners learning color theory
+            </p>
+          </div>
+
+          <div
+            class="difficulty-card"
+            id="normal-card"
+            onclick="selectDifficulty('normal')"
+          >
+            <h4>🟡 Normal Mode</h4>
+            <div class="difficulty-stats">
+              <strong>6 Colors</strong><br />
+              2 Stages Each<br />
+              Base → Fine-tune mixing
+            </div>
+            <p style="font-size: 12px; color: #666">
+              Great balance of challenge and accessibility
+            </p>
+          </div>
+
+          <div
+            class="difficulty-card"
+            id="hard-card"
+            onclick="selectDifficulty('hard')"
+          >
+            <h4>🔴 Hard Mode</h4>
+            <div class="difficulty-stats">
+              <strong>6 Colors</strong><br />
+              3 Stages Each<br />
+              Base → Adjust → Fine-tune
+            </div>
+            <p style="font-size: 12px; color: #666">
+              Expert level for serious color mixing
+            </p>
+          </div>
+        </div>
+
+        <div style="text-align: center; margin: 20px 0">
+          <p>
+            <strong>Selected Difficulty:</strong>
+            <span id="selected-difficulty">None</span>
+          </p>
+        </div>
+      </div>
+
+      <div class="step disabled" id="step4">
+        <h3>
+          Step 4: Extract Colors
+          <span class="step-status status-pending" id="status4">Waiting</span>
+        </h3>
+        <button onclick="processColors()" id="process-btn" disabled>
+          Extract Colors for Selected Difficulty
+        </button>
         <div id="colorPalette"></div>
       </div>
 
-      <div class="step">
-        <h3>Step 4: Generate Game Data</h3>
-        <button onclick="generateGameData()">Generate Data</button>
+      <div class="step disabled" id="step5">
+        <h3>
+          Step 5: Generate Game Data
+          <span class="step-status status-pending" id="status5">Waiting</span>
+        </h3>
+        <button onclick="generateGameData()" id="generate-btn" disabled>
+          Generate Game Data
+        </button>
         <div id="output"></div>
       </div>
     </div>
 
-    <script src="imageProcessor.js"></script>
+    <script>
+      // Global variables
+      let originalCanvas, resizedCanvas;
+      let originalCtx, resizedCtx;
+      let loadedImage = null;
+      let selectedDifficultyMode = null;
+      let extractedColors = null;
+
+      // Initialize when page loads
+      document.addEventListener("DOMContentLoaded", function () {
+        console.log("Enhanced image processor loaded!");
+        originalCanvas = document.getElementById("originalCanvas");
+        resizedCanvas = document.getElementById("resizedCanvas");
+        originalCtx = originalCanvas.getContext("2d");
+        resizedCtx = resizedCanvas.getContext("2d");
+        document
+          .getElementById("imageInput")
+          .addEventListener("change", loadImageFile);
+      });
+
+      /**
+       * Load and display an image file
+       */
+      function loadImageFile(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        console.log("Loading file:", file.name);
+        const reader = new FileReader();
+
+        reader.onload = function (e) {
+          const img = new Image();
+          img.onload = function () {
+            console.log("Image loaded:", img.width, "x", img.height);
+            loadedImage = img;
+            originalCtx.clearRect(
+              0,
+              0,
+              originalCanvas.width,
+              originalCanvas.height
+            );
+            originalCtx.drawImage(img, 0, 0, 300, 300);
+
+            // Enable step 2
+            enableStep(2);
+            updateStatus(1, "complete");
+          };
+          img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+      }
+
+      /**
+       * Resize image to 50x50 grid
+       */
+      function resizeImage() {
+        if (!loadedImage) {
+          alert("Please load an image first!");
+          return;
+        }
+        console.log("Resizing to 50x50 grid...");
+        resizedCtx.clearRect(0, 0, resizedCanvas.width, resizedCanvas.height);
+        resizedCtx.drawImage(loadedImage, 0, 0, 250, 250);
+
+        // Enable step 3
+        enableStep(3);
+        updateStatus(2, "complete");
+      }
+
+      /**
+       * Select difficulty mode and update UI
+       */
+      function selectDifficulty(mode) {
+        // Remove previous selection
+        document.querySelectorAll(".difficulty-card").forEach((card) => {
+          card.classList.remove("selected-difficulty");
+        });
+
+        // Add selection to chosen card
+        document
+          .getElementById(mode + "-card")
+          .classList.add("selected-difficulty");
+
+        // Update global state
+        selectedDifficultyMode = mode;
+        document.getElementById("selected-difficulty").textContent =
+          mode.charAt(0).toUpperCase() + mode.slice(1);
+
+        // Enable step 4
+        enableStep(4);
+        updateStatus(3, "complete");
+
+        console.log(`Selected difficulty: ${mode}`);
+      }
+
+      /**
+       * Process colors based on selected difficulty
+       */
+      function processColors() {
+        if (!selectedDifficultyMode) {
+          alert("Please select a difficulty mode first!");
+          return;
+        }
+
+        // Determine number of colors based on difficulty
+        let numColors = selectedDifficultyMode === "easy" ? 5 : 6;
+
+        console.log(
+          `Extracting ${numColors} colors for ${selectedDifficultyMode} mode...`
+        );
+
+        // Create temp canvas for pixel extraction
+        const tempCanvas = document.createElement("canvas");
+        tempCanvas.width = 50;
+        tempCanvas.height = 50;
+        const tempCtx = tempCanvas.getContext("2d");
+        tempCtx.drawImage(loadedImage, 0, 0, 50, 50);
+
+        // Get pixel data
+        const imageData = tempCtx.getImageData(0, 0, 50, 50);
+        const pixels = imageData.data;
+
+        // Convert to color objects
+        const allColors = [];
+        for (let i = 0; i < pixels.length; i += 4) {
+          allColors.push({
+            r: pixels[i],
+            g: pixels[i + 1],
+            b: pixels[i + 2],
+          });
+        }
+
+        // Extract dominant colors
+        extractedColors = findDominantColors(allColors, numColors);
+        console.log("Dominant colors found:", extractedColors);
+        displayColorPalette(extractedColors);
+
+        // Enable step 5
+        enableStep(5);
+        updateStatus(4, "complete");
+      }
+
+      /**
+       * Generate game data based on selected difficulty
+       */
+      function generateGameData() {
+        if (!selectedDifficultyMode || !extractedColors) {
+          alert("Please complete all previous steps first!");
+          return;
+        }
+
+        console.log(`Generating ${selectedDifficultyMode} mode game data...`);
+
+        // Get painting info from inputs
+        const artistName =
+          document.getElementById("artistName").value.trim() ||
+          "Unknown Artist";
+        const paintingName =
+          document.getElementById("paintingName").value.trim() ||
+          "Untitled Painting";
+        const paintingId = paintingName
+          .toLowerCase()
+          .replace(/[^a-z0-9\s]/g, "")
+          .replace(/\s+/g, "");
+
+        // Generate pixel mapping for the extracted colors
+        const tempCanvas = document.createElement("canvas");
+        tempCanvas.width = 50;
+        tempCanvas.height = 50;
+        const tempCtx = tempCanvas.getContext("2d");
+        tempCtx.drawImage(loadedImage, 0, 0, 50, 50);
+
+        const imageData = tempCtx.getImageData(0, 0, 50, 50);
+        const pixels = imageData.data;
+
+        // Create color groups based on difficulty
+        const colorGroups = generateColorGroupsForDifficulty(
+          selectedDifficultyMode,
+          extractedColors,
+          pixels
+        );
+
+        // Create the enhanced painting data structure
+        const paintingData = {
+          [paintingId]: {
+            id: paintingId,
+            name: paintingName,
+            artist: artistName,
+            difficulty: selectedDifficultyMode,
+            dimensions: { width: 50, height: 50 },
+            colorGroups: colorGroups,
+          },
+        };
+
+        displayGeneratedData(
+          paintingData,
+          paintingName,
+          artistName,
+          selectedDifficultyMode
+        );
+        updateStatus(5, "complete");
+      }
+
+      /**
+       * Enable a step and its controls
+       */
+      function enableStep(stepNumber) {
+        const step = document.getElementById(`step${stepNumber}`);
+        step.classList.remove("disabled");
+
+        // Enable specific buttons
+        if (stepNumber === 2) {
+          document.getElementById("resize-btn").disabled = false;
+        } else if (stepNumber === 4) {
+          document.getElementById("process-btn").disabled = false;
+        } else if (stepNumber === 5) {
+          document.getElementById("generate-btn").disabled = false;
+        }
+      }
+
+      /**
+       * Update step status indicator
+       */
+      function updateStatus(stepNumber, status) {
+        const statusEl = document.getElementById(`status${stepNumber}`);
+        statusEl.className = `step-status status-${status}`;
+        statusEl.textContent = status === "complete" ? "Complete" : "Waiting";
+      }
+
+      /**
+       * Generate color groups based on difficulty mode
+       */
+      function generateColorGroupsForDifficulty(
+        difficulty,
+        dominantColors,
+        pixels
+      ) {
+        const colorGroups = [];
+        const numColors = dominantColors.length;
+
+        // Color names for different counts
+        const colorNames = {
+          5: [
+            "Shadow Depths",
+            "Porcelain Glow",
+            "Amber Velvet",
+            "Midnight Turban",
+            "Pearl Shimmer",
+          ],
+          6: [
+            "Shadow Depths",
+            "Porcelain Glow",
+            "Amber Velvet",
+            "Midnight Turban",
+            "Pearl Shimmer",
+            "Golden Highlight",
+          ],
+        };
+
+        for (let colorIndex = 0; colorIndex < numColors; colorIndex++) {
+          const targetColor = dominantColors[colorIndex];
+          const pixelCoordinates = [];
+
+          // Map pixels to this color group
+          for (let y = 0; y < 50; y++) {
+            for (let x = 0; x < 50; x++) {
+              const pixelIndex = (y * 50 + x) * 4;
+              const pixelColor = {
+                r: pixels[pixelIndex],
+                g: pixels[pixelIndex + 1],
+                b: pixels[pixelIndex + 2],
+              };
+
+              // Find closest dominant color
+              let closestColorIndex = 0;
+              let closestDistance = Infinity;
+              dominantColors.forEach((domColor, index) => {
+                const distance = colorDistance(pixelColor, domColor);
+                if (distance < closestDistance) {
+                  closestDistance = distance;
+                  closestColorIndex = index;
+                }
+              });
+
+              if (closestColorIndex === colorIndex) {
+                pixelCoordinates.push([x, y]);
+              }
+            }
+          }
+
+          // Generate stages based on difficulty
+          const stages = generateStagesForDifficulty(
+            difficulty,
+            colorIndex,
+            targetColor
+          );
+
+          colorGroups.push({
+            id: colorIndex + 1,
+            name: colorNames[numColors][colorIndex],
+            targetRGB: {
+              r: targetColor.r,
+              g: targetColor.g,
+              b: targetColor.b,
+            },
+            pixels: pixelCoordinates,
+            stages: stages,
+          });
+
+          console.log(
+            `Color ${colorIndex + 1}: ${colorNames[numColors][colorIndex]} - ${
+              pixelCoordinates.length
+            } pixels - ${stages.length} stage(s)`
+          );
+        }
+
+        return colorGroups;
+      }
+
+      /**
+       * Generate stages based on difficulty mode
+       */
+      function generateStagesForDifficulty(
+        difficulty,
+        colorIndex,
+        targetColor
+      ) {
+        switch (difficulty) {
+          case "easy":
+            return generateEasyStages(targetColor);
+          case "normal":
+            return generateNormalStages(colorIndex, targetColor);
+          case "hard":
+            return generateHardStages(colorIndex, targetColor);
+          default:
+            return generateEasyStages(targetColor);
+        }
+      }
+
+      /**
+       * Easy mode: 1 stage for all colors
+       */
+      function generateEasyStages(targetColor) {
+        return [
+          {
+            colors: generateSimpleMixingRecipe(targetColor),
+          },
+        ];
+      }
+
+      /**
+       * Normal mode: 2 stages for all colors
+       */
+      function generateNormalStages(colorIndex, targetColor) {
+        return [
+          {
+            colors: generateBaseColors(targetColor),
+          },
+          {
+            colors: ["previous", generateSecondStageColor(targetColor)],
+          },
+        ];
+      }
+
+      /**
+       * Hard mode: 3 stages for all colors
+       */
+      function generateHardStages(colorIndex, targetColor) {
+        return [
+          {
+            colors: generateBaseColors(targetColor),
+          },
+          {
+            colors: ["previous", generateSecondStageColor(targetColor)],
+          },
+          {
+            colors: ["previous", generateThirdStageColor(targetColor)],
+          },
+        ];
+      }
+
+      /**
+       * Generate base colors for multi-stage mixing
+       */
+      function generateBaseColors(targetColor) {
+        if (targetColor.r > 150 && targetColor.g > 150 && targetColor.b > 150) {
+          // Light color
+          return [
+            { r: 255, g: 255, b: 255, name: "White" },
+            { r: 255, g: 240, b: 200, name: "Ivory" },
+          ];
+        } else if (
+          targetColor.b > targetColor.r &&
+          targetColor.b > targetColor.g
+        ) {
+          // Blue-ish
+          return [
+            { r: 0, g: 0, b: 255, name: "Pure Blue" },
+            { r: 0, g: 0, b: 150, name: "Deep Blue" },
+          ];
+        } else if (targetColor.r > targetColor.b && targetColor.g > 80) {
+          // Brown/orange-ish
+          return [
+            { r: 255, g: 165, b: 0, name: "Orange" },
+            { r: 139, g: 69, b: 19, name: "Saddle Brown" },
+          ];
+        } else {
+          // Dark color
+          return [
+            { r: 0, g: 0, b: 0, name: "Black" },
+            { r: 105, g: 105, b: 105, name: "Dim Gray" },
+          ];
+        }
+      }
+
+      /**
+       * Generate second stage adjustment color
+       */
+      function generateSecondStageColor(targetColor) {
+        const brightness = (targetColor.r + targetColor.g + targetColor.b) / 3;
+
+        if (brightness > 128) {
+          return { r: 245, g: 245, b: 220, name: "Beige" };
+        } else {
+          return { r: 64, g: 64, b: 64, name: "Dark Gray" };
+        }
+      }
+
+      /**
+       * Generate third stage fine-tuning color
+       */
+      function generateThirdStageColor(targetColor) {
+        // For hard mode, add subtle color adjustments
+        if (targetColor.r > targetColor.g && targetColor.r > targetColor.b) {
+          return { r: 205, g: 92, b: 92, name: "Indian Red" };
+        } else if (
+          targetColor.b > targetColor.r &&
+          targetColor.b > targetColor.g
+        ) {
+          return { r: 70, g: 130, b: 180, name: "Steel Blue" };
+        } else if (
+          targetColor.g > targetColor.r &&
+          targetColor.g > targetColor.b
+        ) {
+          return { r: 107, g: 142, b: 35, name: "Olive Drab" };
+        } else {
+          return { r: 160, g: 160, b: 160, name: "Light Gray" };
+        }
+      }
+
+      /**
+       * Simple mixing recipe for easy mode
+       */
+      function generateSimpleMixingRecipe(targetColor) {
+        if (targetColor.r > 150 && targetColor.g > 150 && targetColor.b > 150) {
+          return [
+            { r: 255, g: 255, b: 255, name: "White" },
+            { r: 200, g: 180, b: 140, name: "Cream" },
+          ];
+        } else if (
+          targetColor.b > targetColor.r &&
+          targetColor.b > targetColor.g
+        ) {
+          return [
+            { r: 0, g: 0, b: 255, name: "Blue" },
+            { r: 0, g: 0, b: 0, name: "Black" },
+          ];
+        } else if (targetColor.r > 100 && targetColor.g > 80) {
+          return [
+            { r: 139, g: 69, b: 19, name: "Brown" },
+            { r: 255, g: 255, b: 0, name: "Yellow" },
+          ];
+        } else {
+          return [
+            { r: 0, g: 0, b: 0, name: "Black" },
+            { r: 100, g: 100, b: 100, name: "Gray" },
+          ];
+        }
+      }
+
+      /**
+       * Simple color clustering algorithm
+       */
+      function findDominantColors(colors, numColors) {
+        // Create diverse seed colors
+        const seeds = [];
+        for (let i = 0; i < numColors; i++) {
+          const hue = (360 / numColors) * i;
+          seeds.push(hslToRgb(hue, 0.7, 0.5));
+        }
+
+        // Cluster pixels to seeds
+        const clusters = seeds.map((seed) => ({
+          center: seed,
+          colors: [],
+          totalR: 0,
+          totalG: 0,
+          totalB: 0,
+          count: 0,
+        }));
+
+        colors.forEach((color) => {
+          let closestCluster = 0;
+          let closestDistance = Infinity;
+
+          clusters.forEach((cluster, index) => {
+            const distance = colorDistance(color, cluster.center);
+            if (distance < closestDistance) {
+              closestDistance = distance;
+              closestCluster = index;
+            }
+          });
+
+          const cluster = clusters[closestCluster];
+          cluster.colors.push(color);
+          cluster.totalR += color.r;
+          cluster.totalG += color.g;
+          cluster.totalB += color.b;
+          cluster.count++;
+        });
+
+        // Calculate cluster averages
+        return clusters.map((cluster) => {
+          if (cluster.count === 0)
+            return { r: 128, g: 128, b: 128, pixelCount: 0 };
+          return {
+            r: Math.round(cluster.totalR / cluster.count),
+            g: Math.round(cluster.totalG / cluster.count),
+            b: Math.round(cluster.totalB / cluster.count),
+            pixelCount: cluster.count,
+          };
+        });
+      }
+
+      /**
+       * Helper functions
+       */
+      function colorDistance(c1, c2) {
+        const rDiff = c1.r - c2.r;
+        const gDiff = c1.g - c2.g;
+        const bDiff = c1.b - c2.b;
+        return Math.sqrt(rDiff * rDiff + gDiff * gDiff + bDiff * bDiff);
+      }
+
+      function hslToRgb(h, s, l) {
+        h /= 360;
+        const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+        const p = 2 * l - q;
+
+        function hueToRgb(p, q, t) {
+          if (t < 0) t += 1;
+          if (t > 1) t -= 1;
+          if (t < 1 / 6) return p + (q - p) * 6 * t;
+          if (t < 1 / 2) return q;
+          if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6;
+          return p;
+        }
+
+        return {
+          r: Math.round(hueToRgb(p, q, h + 1 / 3) * 255),
+          g: Math.round(hueToRgb(p, q, h) * 255),
+          b: Math.round(hueToRgb(p, q, h - 1 / 3) * 255),
+        };
+      }
+
+      /**
+       * Display extracted color palette
+       */
+      function displayColorPalette(colors) {
+        const paletteDiv = document.getElementById("colorPalette");
+
+        let html = `<h4>Extracted Color Palette:</h4>
+                   <div style="display: flex; gap: 10px; margin: 10px 0; flex-wrap: wrap;">`;
+
+        colors.forEach((color, index) => {
+          html += `
+            <div style="text-align: center;">
+              <div style="width: 60px; height: 60px; background-color: rgb(${
+                color.r
+              },${color.g},${color.b}); 
+                         border: 2px solid #ddd; border-radius: 8px; margin: 0 auto 5px auto;"></div>
+              <small>Color ${index + 1}<br>${color.pixelCount} pixels</small>
+            </div>
+          `;
+        });
+
+        const stageInfo =
+          selectedDifficultyMode === "easy"
+            ? "1 stage each"
+            : selectedDifficultyMode === "normal"
+            ? "2 stages each"
+            : "3 stages each";
+        html += `</div>
+                 <div style="background: #f0f0f0; padding: 10px; border-radius: 8px; margin-top: 10px;">
+                   <strong>${
+                     selectedDifficultyMode.charAt(0).toUpperCase() +
+                     selectedDifficultyMode.slice(1)
+                   } Mode:</strong> 
+                   ${colors.length} colors, ${stageInfo}
+                 </div>`;
+
+        paletteDiv.innerHTML = html;
+      }
+
+      /**
+       * Display generated data with enhanced metadata
+       */
+      function displayGeneratedData(
+        paintingData,
+        paintingName,
+        artistName,
+        difficulty
+      ) {
+        const jsFileContent = `/* ==============================================
+   REAL PAINTING DATA - ${paintingName.toUpperCase()} (${difficulty.toUpperCase()} MODE)
+   Artist: ${artistName}
+   Generated from actual painting image
+   ============================================== */
+
+const PAINTINGS = ${JSON.stringify(paintingData, null, 2)};
+
+// Export for use in other files  
+window.PAINTINGS = PAINTINGS;`;
+
+        const output = document.getElementById("output");
+        const colorCount = Object.values(paintingData)[0].colorGroups.length;
+        const stageInfo =
+          difficulty === "easy"
+            ? "1 stage each"
+            : difficulty === "normal"
+            ? "2 stages each"
+            : "3 stages each";
+
+        output.innerHTML = `
+          <h4>✅ Complete ${
+            difficulty.charAt(0).toUpperCase() + difficulty.slice(1)
+          } Mode Game Data Generated!</h4>
+          <div style="background: #e8f5e8; padding: 15px; border-radius: 8px; margin: 10px 0;">
+            <p><strong>Artist:</strong> ${artistName}</p>
+            <p><strong>Painting:</strong> ${paintingName}</p>
+            <p><strong>Difficulty:</strong> ${
+              difficulty.charAt(0).toUpperCase() + difficulty.slice(1)
+            } Mode</p>
+            <p><strong>Colors:</strong> ${colorCount} colors</p>
+            <p><strong>Stages:</strong> ${stageInfo}</p>
+          </div>
+          <p>Copy this entire content to replace your paintingData.js file:</p>
+          <textarea style="width: 100%; height: 400px; font-family: monospace;" readonly>${jsFileContent}</textarea>
+          <button onclick="copyToClipboard()" style="margin-top: 10px;">Copy Complete File</button>
+        `;
+
+        console.log(
+          `Generated ${difficulty} mode data for: ${artistName} - ${paintingName}`
+        );
+      }
+
+      /**
+       * Copy generated data to clipboard
+       */
+      function copyToClipboard() {
+        const textarea = document.querySelector("#output textarea");
+        if (textarea) {
+          textarea.select();
+          document.execCommand("copy");
+          alert("Game data copied to clipboard!");
+        }
+      }
+    </script>
   </body>
 </html>

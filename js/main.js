@@ -187,6 +187,7 @@ function showGameMessage(title, text, callback) {
   // Set message content
   document.getElementById("message-title").textContent = title;
   document.getElementById("message-text").textContent = text;
+  document.body.style.overflow = "auto";
 
   // Show overlay
   const overlay = document.getElementById("message-overlay");
@@ -410,7 +411,7 @@ function submitColor() {
     ) {
       document.getElementById("painting-section-title").textContent =
         "Your Masterpiece!";
-      s;
+
       // Game complete!
       showGameMessage(
         "Game Complete!",
@@ -420,10 +421,24 @@ function submitColor() {
         }
       );
 
-      // Disable mixing interface after game completion
+      // ENHANCED: Hide ALL game interface elements after completion
       document.getElementById("mixing-section").classList.add("hidden");
       document.getElementById("target-section").classList.add("hidden");
-      // TODO: Show completion screen later
+      document.getElementById("game-header").classList.add("hidden"); // Hide round info
+
+      // Show only the final painting and score
+      document.getElementById("score-section").classList.remove("hidden");
+      document.getElementById("painting-section").classList.remove("hidden");
+
+      // Update score to show TOTAL instead of last round
+      document.getElementById("current-score").textContent =
+        gameState.totalScore;
+
+      // Prevent any further interaction
+      document.getElementById("submit-color-btn").disabled = true;
+
+      console.log("Game completed - UI cleaned up");
+      return; // Exit function early to prevent further processing
     } else {
       // Load next color
       loadCurrentColor();
