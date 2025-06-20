@@ -285,6 +285,282 @@ button:active {
 }
 
 /* ==============================================
+   GALLERY SYSTEM STYLING
+   ============================================== */
+
+/* Gallery header styling */
+.gallery-header {
+  margin-bottom: 3rem;
+}
+
+.gallery-header h2 {
+  font-size: 2.5rem;
+  color: #2196f3;
+  margin-bottom: 0.5rem;
+}
+
+.gallery-header p {
+  font-size: 1.2rem;
+  color: #666;
+}
+
+/* Wings grid layout */
+#wings-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 2rem;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+/* Individual wing card */
+.wing-card {
+  background: white;
+  border-radius: 16px;
+  padding: 2rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: 2px solid transparent;
+}
+
+.wing-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+  border-color: #2196f3;
+}
+
+.wing-card h3 {
+  color: #2196f3;
+  margin-bottom: 0.5rem;
+  font-size: 1.5rem;
+}
+
+.wing-card p {
+  color: #666;
+  margin-bottom: 1rem;
+  line-height: 1.6;
+}
+
+.wing-card .painting-count {
+  font-size: 0.9rem;
+  color: #999;
+  font-style: italic;
+}
+
+/* Wing screen header */
+.wing-header {
+  margin-bottom: 3rem;
+  text-align: center;
+}
+
+.back-button {
+  background: transparent;
+  color: #2196f3;
+  border: 2px solid #2196f3;
+  padding: 8px 16px;
+  margin-bottom: 2rem;
+  transition: all 0.3s ease;
+}
+
+.back-button:hover {
+  background: #2196f3;
+  color: white;
+}
+
+#wing-title {
+  font-size: 2.2rem;
+  color: #2196f3;
+  margin-bottom: 0.5rem;
+}
+
+#wing-description {
+  font-size: 1.1rem;
+  color: #666;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+/* Paintings grid layout */
+#paintings-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 2rem;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+/* Individual painting card */
+.painting-card {
+  background: white;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+  border: 2px solid transparent;
+  position: relative;
+}
+
+.painting-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+}
+
+.painting-card.available {
+  cursor: pointer;
+  border-color: #4caf50;
+}
+
+.painting-card.available:hover {
+  border-color: #45a049;
+}
+
+.painting-card.locked {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.painting-card.locked:hover {
+  transform: none;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+/* Painting card image area */
+.painting-image {
+  height: 200px;
+  background: linear-gradient(135deg, #f5f5f5 0%, #e8e8e8 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 3rem;
+  position: relative;
+}
+
+.painting-image.has-preview {
+  background: none;
+  padding: 0;
+}
+
+.painting-image .placeholder-icon {
+  color: #ccc;
+}
+
+/* Lock overlay for locked paintings */
+.lock-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  color: white;
+}
+
+/* Painting card content */
+.painting-info {
+  padding: 1.5rem;
+}
+
+.painting-info h4 {
+  color: #333;
+  margin-bottom: 0.5rem;
+  font-size: 1.3rem;
+}
+
+.painting-meta {
+  color: #666;
+  font-size: 0.9rem;
+  margin-bottom: 1rem;
+}
+
+.painting-status {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  font-weight: bold;
+}
+
+.status-available {
+  color: #4caf50;
+}
+
+.status-locked {
+  color: #999;
+}
+
+.status-completed {
+  color: #2196f3;
+}
+
+/* Difficulty indicators */
+.difficulty-indicators {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.difficulty-badge {
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: bold;
+}
+
+.difficulty-easy {
+  background: #e8f5e8;
+  color: #4caf50;
+}
+
+.difficulty-normal {
+  background: #fff3e0;
+  color: #ff9800;
+}
+
+.difficulty-hard {
+  background: #ffebee;
+  color: #f44336;
+}
+
+.difficulty-locked {
+  background: #f5f5f5;
+  color: #999;
+}
+
+/* ==============================================
+   RESPONSIVE DESIGN FOR GALLERY
+   ============================================== */
+
+@media (max-width: 768px) {
+  #wings-grid {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+
+  #paintings-grid {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+
+  .wing-card,
+  .painting-card {
+    margin: 0 10px;
+  }
+
+  .gallery-header h2 {
+    font-size: 2rem;
+  }
+
+  #wing-title {
+    font-size: 1.8rem;
+  }
+}
+
+/* ==============================================
    PAINTING CANVAS STYLING
    ============================================== */
 

@@ -7,11 +7,35 @@
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
-    <!-- Welcome Screen -->
-    <div id="welcome-screen" class="screen">
+   <body>
+    <!-- Home Screen -->
+    <div id="home-screen" class="screen">
       <h1>Master of Colors</h1>
-      <p>Recreate famous paintings by mixing colors!</p>
-      <button id="start-game-btn">Start Game</button>
+      <p>Journey through art history, one color at a time</p>
+      <button id="enter-gallery-btn">Enter Gallery</button>
+    </div>
+
+    <!-- Gallery Screen -->
+    <div id="gallery-screen" class="screen hidden">
+      <div class="gallery-header">
+        <h2>The Gallery</h2>
+        <p>Choose your artistic journey</p>
+      </div>
+      <div id="wings-grid">
+        <!-- Wings populated by renderWings() -->
+      </div>
+    </div>
+
+    <!-- Wing Screen -->
+    <div id="wing-screen" class="screen hidden">
+      <div class="wing-header">
+        <button id="back-to-gallery" class="back-button">← Back to Gallery</button>
+        <h2 id="wing-title"></h2>
+        <p id="wing-description"></p>
+      </div>
+      <div id="paintings-grid">
+        <!-- Paintings populated by renderWing() -->
+      </div>
     </div>
 
     <!-- Game Screen -->
@@ -83,8 +107,9 @@
     </div>
 
     <script src="data/paintingData.js"></script>
+    <script src="js/galleryData.js"></script>
     <script src="js/colorMath.js"></script>
     <script src="js/canvas.js"></script>
-    <script src="js/main.js"></script>
+    <script src="js/main.js"></script>  
   </body>
 </html>

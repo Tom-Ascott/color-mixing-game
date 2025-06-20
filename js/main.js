@@ -1,11 +1,16 @@
 /* ==============================================
-   COLOR MIXING GAME - MAIN GAME LOGIC
+   COLOR MIXING GAME - MAIN GAME LOGIC WITH GALLERY
    ============================================== */
 
 // Game state - completely data-driven
 let gameState = {
+  // Gallery navigation
+  currentScreen: "home", // home, gallery, wing, game
+  currentWing: null,
+  currentPainting: null,
+
   // Current painting and progress
-  currentPainting: null, // Will load from PAINTINGS data
+  currentPaintingData: null, // Will load from PAINTINGS data
   currentColorGroupIndex: 0, // Which color we're working on (0-5)
   currentStage: 1, // Which stage of current color (1, 2, etc.)
 
@@ -27,41 +32,264 @@ let gameState = {
 
 // Wait for page to load, then set up the game
 document.addEventListener("DOMContentLoaded", function () {
-  console.log("Game loaded successfully!");
-  setupGame();
+  console.log("Gallery game loaded successfully!");
+  setupGalleryGame();
 });
 
 /* ==============================================
-   GAME CONTROLLER - MANAGES PAINTING FLOW
+   GALLERY NAVIGATION SYSTEM
    ============================================== */
 
 /**
- * Initialize a new game with specified painting
- * @param {string} paintingId - ID of painting to load
+ * Initialize the gallery interface and event listeners
  */
-function initializeGame(paintingId = null) {
-  console.log(`Initializing game...`);
+function setupGalleryGame() {
+  console.log("Setting up gallery game...");
 
-  // If no specific painting ID, use the first available one
-  if (!paintingId) {
-    const availablePaintings = Object.keys(PAINTINGS);
-    paintingId = availablePaintings[0];
-    console.log(`Auto-selected painting: ${paintingId}`);
+  // Initialize painting canvas
+  paintingCanvas = new PaintingCanvas("painting-canvas");
+
+  // Set up gallery navigation event listeners
+  const enterGalleryBtn = document.getElementById("enter-gallery-btn");
+  const backToGalleryBtn = document.getElementById("back-to-gallery");
+
+  if (enterGalleryBtn) enterGalleryBtn.addEventListener("click", showGallery);
+  if (backToGalleryBtn) backToGalleryBtn.addEventListener("click", showGallery);
+
+  // Set up existing game event listeners
+  const startMixingBtn = document.getElementById("start-mixing-from-target");
+  const submitBtn = document.getElementById("submit-color-btn");
+  const slider = document.getElementById("mix-slider");
+
+  if (startMixingBtn)
+    startMixingBtn.addEventListener("click", startMixingFromTarget);
+  if (submitBtn) submitBtn.addEventListener("click", submitColor);
+  if (slider) slider.addEventListener("input", updateSlider);
+
+  // Start with home screen
+  showScreen("home");
+  console.log("Gallery game setup complete!");
+}
+
+/**
+ * Show a specific screen and hide others
+ * @param {string} screenId - Screen to show: home, gallery, wing, game
+ */
+function showScreen(screenId) {
+  console.log(`Showing screen: ${screenId}`);
+
+  // Hide all screens
+  const screens = [
+    "home-screen",
+    "gallery-screen",
+    "wing-screen",
+    "game-screen",
+  ];
+  screens.forEach((screen) => {
+    const element = document.getElementById(screen);
+    if (element) element.classList.add("hidden");
+  });
+
+  // Show requested screen
+  const targetScreen = document.getElementById(`${screenId}-screen`);
+  if (targetScreen) {
+    targetScreen.classList.remove("hidden");
+    gameState.currentScreen = screenId;
+  }
+}
+
+/**
+ * Show the gallery with all wings
+ */
+function showGallery() {
+  console.log("Entering gallery...");
+  showScreen("gallery");
+  renderWings();
+}
+
+/**
+ * Show a specific wing with its paintings
+ * @param {string} wingId - Wing to display
+ */
+function showWing(wingId) {
+  console.log(`Entering wing: ${wingId}`);
+
+  const wing = getWing(wingId);
+  if (!wing) {
+    console.error(`Wing ${wingId} not found`);
+    return;
   }
 
-  // Load painting data
-  gameState.currentPainting = PAINTINGS[paintingId];
+  gameState.currentWing = wingId;
+  showScreen("wing");
 
-  if (!gameState.currentPainting) {
-    console.error(`Painting ${paintingId} not found!`);
-    return false;
+  // Update wing header
+  document.getElementById("wing-title").textContent = wing.name;
+  document.getElementById("wing-description").textContent = wing.description;
+
+  // Render paintings in this wing
+  renderWingPaintings(wingId);
+}
+
+/**
+ * Select a painting and start the game
+ * @param {string} paintingId - Painting to play
+ * @param {string} difficulty - Difficulty level: easy, normal, hard
+ */
+function selectPainting(paintingId, difficulty = "normal") {
+  console.log(`Selecting painting: ${paintingId}, difficulty: ${difficulty}`);
+
+  const paintingInfo = getPainting(paintingId);
+  if (!paintingInfo) {
+    console.error(`Painting ${paintingId} not found`);
+    return;
   }
+
+  // Check if painting data exists
+  const paintingData = getPaintingGameData(paintingId);
+  if (!paintingData) {
+    alert(`${paintingInfo.name} is not ready to play yet. Check back soon!`);
+    return;
+  }
+
+  // Store current painting selection
+  gameState.currentPainting = paintingId;
+
+  // Initialize game with the selected painting
+  const success = initializeGame(paintingData);
+  if (success) {
+    showScreen("game");
+  }
+}
+
+/* ==============================================
+   GALLERY RENDERING FUNCTIONS
+   ============================================== */
+
+/**
+ * Render all wings in the gallery
+ */
+function renderWings() {
+  const wingsGrid = document.getElementById("wings-grid");
+  if (!wingsGrid) return;
+
+  const wings = getWingsSorted();
+
+  wingsGrid.innerHTML = wings
+    .map(
+      (wing) => `
+    <div class="wing-card" onclick="showWing('${wing.id}')">
+      <h3>${wing.name}</h3>
+      <p>${wing.description}</p>
+      <div class="painting-count">${wing.paintings.length} masterpieces</div>
+    </div>
+  `
+    )
+    .join("");
+
+  console.log(`Rendered ${wings.length} wings`);
+}
+
+/**
+ * Render paintings in a specific wing
+ * @param {string} wingId - Wing to render paintings for
+ */
+function renderWingPaintings(wingId) {
+  const paintingsGrid = document.getElementById("paintings-grid");
+  if (!paintingsGrid) return;
+
+  const paintings = getWingPaintings(wingId);
+
+  paintingsGrid.innerHTML = paintings
+    .map((painting) => renderPaintingCard(painting, wingId))
+    .join("");
+
+  console.log(`Rendered ${paintings.length} paintings for wing ${wingId}`);
+}
+
+/**
+ * Render a single painting card
+ * @param {Object} painting - Painting data
+ * @param {string} wingId - Wing this painting belongs to
+ * @returns {string} HTML for painting card
+ */
+function renderPaintingCard(painting, wingId) {
+  const isAvailable = painting.status === "available";
+  const isLocked = painting.status === "locked";
+  const hasGameData = hasPaintingData(painting.id);
+
+  const statusText = isAvailable ? "Available to Play" : "Locked";
+  const statusClass = isAvailable ? "status-available" : "status-locked";
+
+  return `
+    <div class="painting-card ${painting.status}" 
+         ${isAvailable ? `onclick="selectPainting('${painting.id}')"` : ""}>
+      
+      <div class="painting-image">
+        <div class="placeholder-icon">🎨</div>
+        ${isLocked ? '<div class="lock-overlay">🔒</div>' : ""}
+      </div>
+      
+      <div class="painting-info">
+        <h4>${painting.name}</h4>
+        <div class="painting-meta">
+          ${painting.artist} • ${painting.year}
+        </div>
+        
+        <div class="painting-status">
+          <span class="${statusClass}">${statusText}</span>
+          ${
+            !hasGameData
+              ? '<span style="color: #ff9800;">• Coming Soon</span>'
+              : ""
+          }
+        </div>
+        
+        <div class="difficulty-indicators">
+          <span class="difficulty-badge ${
+            isAvailable ? "difficulty-easy" : "difficulty-locked"
+          }">
+            Easy
+          </span>
+          <span class="difficulty-badge difficulty-locked">Normal</span>
+          <span class="difficulty-badge difficulty-locked">Hard</span>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+/**
+ * Initialize a new game with specified painting data
+ * @param {Object} paintingData - Painting data from PAINTINGS
+ */
+function initializeGame(paintingData) {
+  console.log(`Initializing game with painting: ${paintingData.name}`);
+
+  // Store painting data
+  gameState.currentPaintingData = paintingData;
 
   // Reset game state
   gameState.currentColorGroupIndex = 0;
   gameState.currentStage = 1;
   gameState.completedColors = [];
   gameState.totalScore = 0;
+
+  // Clear and prepare canvas
+  if (paintingCanvas) {
+    paintingCanvas.clear();
+  }
+
+  // Reset UI elements for new game
+  document.getElementById("score-section").classList.add("hidden");
+  document.getElementById("painting-section").classList.add("hidden");
+  document.getElementById("game-header").classList.remove("hidden");
+  document.getElementById("target-section").classList.remove("hidden");
+  document.getElementById("mixing-section").classList.add("hidden");
+
+  // Re-enable submit button
+  const submitBtn = document.getElementById("submit-color-btn");
+  if (submitBtn) submitBtn.disabled = false;
 
   // Load first color
   loadCurrentColor();
@@ -73,7 +301,7 @@ function initializeGame(paintingId = null) {
  * Load the current color group and stage into gameState.currentMix
  */
 function loadCurrentColor() {
-  const painting = gameState.currentPainting;
+  const painting = gameState.currentPaintingData;
   const colorGroup = painting.colorGroups[gameState.currentColorGroupIndex];
   const stage = colorGroup.stages[gameState.currentStage - 1];
 
@@ -91,14 +319,17 @@ function loadCurrentColor() {
   } else {
     // Later stage - first color is previous result
     gameState.currentMix.color1 = gameState.currentMix.previousStageResult;
-    gameState.currentMix.color2 = stage.colors[1]; // Second color from data
+    gameState.currentMix.color2 = stage.colors[1];
   }
 
   // Target is always the final target for this color group
   gameState.currentMix.target = colorGroup.targetRGB;
 
   console.log(
-    `Loaded color: ${colorGroup.name}, stage ${gameState.currentStage}/${colorGroup.stages.length}`
+    "Loaded color:",
+    colorGroup.name,
+    "stage",
+    gameState.currentStage
   );
 
   // Update UI
@@ -111,7 +342,7 @@ function loadCurrentColor() {
  * Update all UI elements based on current game state
  */
 function updateGameUI() {
-  const painting = gameState.currentPainting;
+  const painting = gameState.currentPaintingData;
   const colorGroup = painting.colorGroups[gameState.currentColorGroupIndex];
 
   // Update round info
@@ -297,7 +528,9 @@ function updateColorDisplay() {
 
     // Update color names from data
     const colorGroup =
-      gameState.currentPainting.colorGroups[gameState.currentColorGroupIndex];
+      gameState.currentPaintingData.colorGroups[
+        gameState.currentColorGroupIndex
+      ];
     const stage = colorGroup.stages[gameState.currentStage - 1];
     const color1Name = document.getElementById("color1-name");
     const color2Name = document.getElementById("color2-name");
@@ -332,7 +565,7 @@ function submitColor() {
   );
 
   const colorGroup =
-    gameState.currentPainting.colorGroups[gameState.currentColorGroupIndex];
+    gameState.currentPaintingData.colorGroups[gameState.currentColorGroupIndex];
 
   // Check if this color has more stages
   if (gameState.currentStage < colorGroup.stages.length) {
@@ -407,7 +640,7 @@ function submitColor() {
     // Check if game is complete
     if (
       gameState.currentColorGroupIndex >=
-      gameState.currentPainting.colorGroups.length
+      gameState.currentPaintingData.colorGroups.length
     ) {
       document.getElementById("painting-section-title").textContent =
         "Your Masterpiece!";
@@ -454,7 +687,7 @@ function submitColor() {
  * Reveal pixels on canvas when a color is completed
  */
 function revealColorOnCanvas(colorGroupIndex, finalColor) {
-  const colorGroup = gameState.currentPainting.colorGroups[colorGroupIndex];
+  const colorGroup = gameState.currentPaintingData.colorGroups[colorGroupIndex];
 
   console.log(
     `Revealing ${colorGroup.pixels.length} pixels for ${colorGroup.name}`
