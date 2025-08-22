@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Painting Data Converter</title>
+    <style>
+      body {
+        font-family: system-ui;
+        padding: 20px;
+        max-width: 800px;
+        margin: 0 auto;
+      }
+      button {
+        background: #2196f3;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 5px;
+        cursor: pointer;
+        margin: 10px 0;
+      }
+      #output {
+        background: #f5f5f5;
+        padding: 10px;
+        border-radius: 5px;
+        font-family: monospace;
+        white-space: pre-wrap;
+        max-height: 400px;
+        overflow-y: auto;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Convert Painting Data to Compressed Format</h1>
+    <p>
+      This tool converts the large coordinate arrays into a simple pixel array.
+    </p>
+
+    <button onclick="convertData()">Convert Painting Data</button>
+
+    <div id="output"></div>
+
+    <!-- Load the existing painting data -->
+    <script src="../data/paintingData.js"></script>
+
+    <script>
+      function convertData() {
+        console.log("Starting conversion...");
+        const output = document.getElementById("output");
+
+        // Check if painting data loaded
+        if (typeof PAINTINGS === "undefined") {
+          output.textContent = "ERROR: Could not load painting data!";
+          return;
+        }
+
+        // Get the painting
+        const painting = PAINTINGS.girlwithapearlearring;
+        if (!painting) {
+          output.textContent = "ERROR: Painting not found!";
+          return;
+        }
+
+        output.textContent = "Painting loaded successfully!\n";
+        output.textContent += `Found ${painting.colorGroups.length} colors\n\n`;
+
+        // Create array for all 2,500 pixels (50x50)
+        const pixelArray = new Array(2500);
+
+        // Initialize all pixels to 0 (no color)
+        for (let i = 0; i < 2500; i++) {
+          pixelArray[i] = 0;
+        }
+
+        // For each color group, mark its pixels
+        painting.colorGroups.forEach((colorGroup, colorIndex) => {
+          const colorNumber = colorIndex + 1; // Colors are 1-6, not 0-5
+
+          output.textContent += `Processing Color ${colorNumber}: ${colorGroup.name}\n`;
+          output.textContent += `  - Has ${colorGroup.pixels.length} pixels\n`;
+
+          // Mark each pixel with this color number
+          colorGroup.pixels.forEach(([x, y]) => {
+            const pixelIndex = y * 50 + x; // Convert x,y to array index
+            pixelArray[pixelIndex] = colorNumber;
+          });
+        });
+
+        // Count pixels per color to verify
+        const colorCounts = {};
+        pixelArray.forEach((colorNum) => {
+          colorCounts[colorNum] = (colorCounts[colorNum] || 0) + 1;
+        });
+
+        output.textContent += "\nPixel counts per color:\n";
+        Object.entries(colorCounts).forEach(([color, count]) => {
+          output.textContent += `  Color ${color}: ${count} pixels\n`;
+        });
+
+        // Generate the new compressed data
+        const compressedData = {
+          format: "colorIndex",
+          width: 50,
+          height: 50,
+          pixels: pixelArray,
+        };
+
+        output.textContent += "\n=== COMPRESSED DATA ===\n";
+        output.textContent += JSON.stringify(compressedData, null, 2);
+
+        // Also log to console for copying
+        console.log("Compressed data:", compressedData);
+      }
+    </script>
+  </body>
+</html>

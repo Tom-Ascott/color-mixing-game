@@ -2,6 +2,40 @@
    COLOR MIXING GAME - MAIN GAME LOGIC WITH GALLERY
    ============================================== */
 
+/**
+ * Convert compressed pixel data back to coordinate arrays
+ * @param {Array} pixelArray - Array of 2,500 color indices
+ * @param {number} numColors - Number of color groups
+ * @returns {Array} Array of pixel coordinate arrays for each color
+ */
+function decodePixelData(pixelArray, numColors) {
+  console.log(
+    `Decoding ${pixelArray.length} pixels into ${numColors} colors...`
+  );
+
+  // Create empty arrays for each color
+  const colorPixels = [];
+  for (let i = 0; i < numColors; i++) {
+    colorPixels[i] = [];
+  }
+
+  // Go through each pixel and add to appropriate color array
+  pixelArray.forEach((colorIndex, pixelIndex) => {
+    if (colorIndex > 0 && colorIndex <= numColors) {
+      const x = pixelIndex % 50;
+      const y = Math.floor(pixelIndex / 50);
+      colorPixels[colorIndex - 1].push([x, y]);
+    }
+  });
+
+  // Log resultss
+  colorPixels.forEach((pixels, index) => {
+    console.log(`Color ${index + 1}: ${pixels.length} pixels`);
+  });
+
+  return colorPixels;
+}
+
 // Game state - completely data-driven
 let gameState = {
   // Gallery navigation
@@ -260,6 +294,44 @@ function renderPaintingCard(painting, wingId) {
 }
 
 /**
+ * Load painting data from compressed format if available
+ * @param {string} paintingId - ID of painting to load
+ * @returns {Object} Painting data with pixels arrays
+ */
+function loadPaintingData(paintingId) {
+  console.log(`Loading painting: ${paintingId}`);
+
+  // Check if compressed data exists
+  if (typeof PIXEL_DATA !== "undefined" && PIXEL_DATA[paintingId]) {
+    console.log("Using compressed data format");
+
+    // Get original painting (without pixels)
+    const painting = PAINTINGS[paintingId];
+
+    // Decode compressed pixels
+    const compressedData = PIXEL_DATA[paintingId];
+    const decodedPixels = decodePixelData(
+      compressedData.pixels,
+      painting.colorGroups.length
+    );
+
+    // Create new painting object with decoded pixels
+    const paintingWithPixels = {
+      ...painting,
+      colorGroups: painting.colorGroups.map((group, index) => ({
+        ...group,
+        pixels: decodedPixels[index],
+      })),
+    };
+
+    return paintingWithPixels;
+  } else {
+    console.log("Using original data format");
+    return PAINTINGS[paintingId];
+  }
+}
+
+/**
  * Initialize a new game with specified painting data
  * @param {Object} paintingData - Painting data from PAINTINGS
  */
@@ -267,8 +339,7 @@ function initializeGame(paintingData) {
   console.log(`Initializing game with painting: ${paintingData.name}`);
 
   // Store painting data
-  gameState.currentPaintingData = paintingData;
-
+  gameState.currentPaintingData = loadPaintingData(paintingData.id);
   // Reset game state
   gameState.currentColorGroupIndex = 0;
   gameState.currentStage = 1;
@@ -402,6 +473,46 @@ function setupGame() {
   } else {
     console.error("Failed to initialize game!");
   }
+  // TEMPORARY: Test compressed data loading
+  if (window.location.search.includes("compressed=true")) {
+    console.log("🧪 COMPRESSED DATA TEST MODE ACTIVE");
+    testCompressedData();
+  }
+}
+
+/**
+ * Test function to verify compressed data works correctly
+ */
+function testCompressedData() {
+  console.log("Testing compressed data...");
+
+  // Check if compressed data is loaded
+  if (typeof PIXEL_DATA === "undefined") {
+    console.error("PIXEL_DATA not found! Did you include pixelData.js?");
+    return;
+  }
+
+  const compressedPainting = PIXEL_DATA.girlwithapearlearring;
+  console.log("Compressed data found:", compressedPainting);
+
+  // Decode the pixel data
+  const decodedPixels = decodePixelData(compressedPainting.pixels, 6);
+
+  // Compare with original
+  const originalPainting = PAINTINGS.girlwithapearlearring;
+  console.log("\n=== COMPARISON ===");
+
+  originalPainting.colorGroups.forEach((group, index) => {
+    const originalCount = group.pixels.length;
+    const decodedCount = decodedPixels[index].length;
+    const match = originalCount === decodedCount ? "✅" : "❌";
+
+    console.log(
+      `${match} Color ${
+        index + 1
+      }: Original=${originalCount}, Decoded=${decodedCount}`
+    );
+  });
 }
 
 /* ==============================================
