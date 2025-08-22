@@ -444,7 +444,8 @@
       }
 
       /**
-       * Generate game data based on selected difficulty
+       * CORRECTED: Enhanced generateGameData() function with proper pixel assignment
+       * This separates pixel assignment from color group creation for clarity
        */
       function generateGameData() {
         if (!selectedDifficultyMode || !extractedColors) {
@@ -452,7 +453,9 @@
           return;
         }
 
-        console.log(`Generating ${selectedDifficultyMode} mode game data...`);
+        console.log(
+          `Generating ${selectedDifficultyMode} mode game data with compressed format...`
+        );
 
         // Get painting info from inputs
         const artistName =
@@ -461,10 +464,13 @@
         const paintingName =
           document.getElementById("paintingName").value.trim() ||
           "Untitled Painting";
-        const paintingId = paintingName
+
+        // Create unique ID with difficulty suffix
+        const baseId = paintingName
           .toLowerCase()
           .replace(/[^a-z0-9\s]/g, "")
           .replace(/\s+/g, "");
+        const paintingId = `${baseId}_${selectedDifficultyMode}`;
 
         // Generate pixel mapping for the extracted colors
         const tempCanvas = document.createElement("canvas");
@@ -476,32 +482,424 @@
         const imageData = tempCtx.getImageData(0, 0, 50, 50);
         const pixels = imageData.data;
 
-        // Create color groups based on difficulty
-        const colorGroups = generateColorGroupsForDifficulty(
-          selectedDifficultyMode,
-          extractedColors,
-          pixels
+        console.log("🔍 DEBUG: Extracted colors:", extractedColors);
+        console.log("🔍 DEBUG: First few pixel values:", [
+          pixels[0],
+          pixels[1],
+          pixels[2],
+          pixels[3], // First pixel RGBA
+          pixels[4],
+          pixels[5],
+          pixels[6],
+          pixels[7], // Second pixel RGBA
+        ]);
+
+        // STEP 1: Assign ALL pixels to colors at once (cleaner approach)
+        const compressedPixels = assignAllPixelsToColors(
+          pixels,
+          extractedColors
         );
 
-        // Create the enhanced painting data structure
-        const paintingData = {
+        // STEP 2: Create color groups using the assigned pixels
+        const colorGroups = createColorGroupsFromAssignment(
+          selectedDifficultyMode,
+          extractedColors,
+          compressedPixels
+        );
+
+        // Create the metadata (NO pixels arrays)
+        const paintingMetadata = {
           [paintingId]: {
             id: paintingId,
-            name: paintingName,
+            name: `${paintingName} (${
+              selectedDifficultyMode.charAt(0).toUpperCase() +
+              selectedDifficultyMode.slice(1)
+            })`,
             artist: artistName,
             difficulty: selectedDifficultyMode,
             dimensions: { width: 50, height: 50 },
-            colorGroups: colorGroups,
+            colorGroups: colorGroups.map((group) => ({
+              id: group.id,
+              name: group.name,
+              targetRGB: group.targetRGB,
+              stages: group.stages,
+              // NO pixels array here!
+            })),
           },
         };
 
-        displayGeneratedData(
-          paintingData,
+        // Create the compressed pixel data
+        const pixelData = {
+          [paintingId]: {
+            format: "colorIndex",
+            width: 50,
+            height: 50,
+            pixels: compressedPixels,
+          },
+        };
+
+        // Display both files
+        displaySplitFormatData(
+          paintingMetadata,
+          pixelData,
           paintingName,
-          artistName,
           selectedDifficultyMode
         );
         updateStatus(5, "complete");
+      }
+
+      /**
+       * STEP 1: Assign all 2,500 pixels to their closest colors
+       * This is cleaner than doing it inside the color group loop
+       */
+      function assignAllPixelsToColors(pixels, dominantColors) {
+        console.log("🔍 DEBUG: Starting pixel assignment...");
+        console.log(
+          "🔍 DEBUG: Number of dominant colors:",
+          dominantColors.length
+        );
+
+        const compressedPixels = new Array(2500);
+        let assignmentCounts = new Array(dominantColors.length).fill(0);
+
+        // Check each of the 2,500 pixels
+        for (let pixelIndex = 0; pixelIndex < 2500; pixelIndex++) {
+          const rgbaIndex = pixelIndex * 4; // Each pixel has 4 values (RGBA)
+
+          const pixelColor = {
+            r: pixels[rgbaIndex],
+            g: pixels[rgbaIndex + 1],
+            b: pixels[rgbaIndex + 2],
+            // Skip alpha channel (rgbaIndex + 3)
+          };
+
+          // Find closest dominant color
+          let closestColorIndex = 0;
+          let closestDistance = Infinity;
+
+          for (
+            let colorIndex = 0;
+            colorIndex < dominantColors.length;
+            colorIndex++
+          ) {
+            const dominantColor = dominantColors[colorIndex];
+            const distance = colorDistance(pixelColor, dominantColor);
+
+            if (distance < closestDistance) {
+              closestDistance = distance;
+              closestColorIndex = colorIndex;
+            }
+          }
+
+          // Assign pixel to closest color (1-based indexing for colors)
+          compressedPixels[pixelIndex] = closestColorIndex + 1;
+          assignmentCounts[closestColorIndex]++;
+        }
+
+        // DEBUG: Log assignment results
+        console.log("🔍 DEBUG: Pixel assignment counts:", assignmentCounts);
+        console.log(
+          "🔍 DEBUG: First 10 assigned pixels:",
+          compressedPixels.slice(0, 10)
+        );
+        console.log(
+          "🔍 DEBUG: Sample pixels around middle:",
+          compressedPixels.slice(1245, 1255)
+        );
+
+        // VALIDATION: Check if any pixels were assigned
+        const totalAssigned = assignmentCounts.reduce(
+          (sum, count) => sum + count,
+          0
+        );
+        console.log(
+          "🔍 DEBUG: Total pixels assigned:",
+          totalAssigned,
+          "/ 2500"
+        );
+
+        if (totalAssigned === 0) {
+          console.error("❌ ERROR: No pixels were assigned to any colors!");
+          console.error(
+            "❌ Check if colorDistance function exists and works correctly"
+          );
+        }
+
+        return compressedPixels;
+      }
+
+      /**
+       * STEP 2: Create color groups from the pixel assignments
+       */
+      function createColorGroupsFromAssignment(
+        difficulty,
+        dominantColors,
+        compressedPixels
+      ) {
+        const colorGroups = [];
+        const numColors = dominantColors.length;
+
+        // Color names for different counts
+        const colorNames = {
+          5: [
+            "Shadow Depths",
+            "Porcelain Glow",
+            "Amber Velvet",
+            "Midnight Turban",
+            "Pearl Shimmer",
+          ],
+          6: [
+            "Shadow Depths",
+            "Porcelain Glow",
+            "Amber Velvet",
+            "Midnight Turban",
+            "Pearl Shimmer",
+            "Golden Highlight",
+          ],
+        };
+
+        for (let colorIndex = 0; colorIndex < numColors; colorIndex++) {
+          const targetColor = dominantColors[colorIndex];
+
+          // Count pixels assigned to this color (for verification)
+          let pixelCount = 0;
+          for (let i = 0; i < compressedPixels.length; i++) {
+            if (compressedPixels[i] === colorIndex + 1) {
+              pixelCount++;
+            }
+          }
+
+          // Generate stages based on difficulty
+          const stages = generateStagesForDifficulty(
+            difficulty,
+            colorIndex,
+            targetColor
+          );
+
+          colorGroups.push({
+            id: colorIndex + 1,
+            name: colorNames[numColors][colorIndex],
+            targetRGB: {
+              r: targetColor.r,
+              g: targetColor.g,
+              b: targetColor.b,
+            },
+            stages: stages,
+          });
+
+          console.log(
+            `✅ Color ${colorIndex + 1}: ${
+              colorNames[numColors][colorIndex]
+            } - ${pixelCount} pixels - ${stages.length} stage(s)`
+          );
+        }
+
+        return colorGroups;
+      }
+
+      /**
+       * Make sure colorDistance function exists
+       * (This might be the missing piece!)
+       */
+      function colorDistance(color1, color2) {
+        const rDiff = color1.r - color2.r;
+        const gDiff = color1.g - color2.g;
+        const bDiff = color1.b - color2.b;
+        return Math.sqrt(rDiff * rDiff + gDiff * gDiff + bDiff * bDiff);
+      }
+
+      /**
+       * Enhanced color group generator that also fills compressed pixel array
+       */
+      function generateColorGroupsForDifficulty(
+        difficulty,
+        dominantColors,
+        pixels,
+        compressedPixels
+      ) {
+        const colorGroups = [];
+        const numColors = dominantColors.length;
+
+        // Color names for different counts
+        const colorNames = {
+          5: [
+            "Shadow Depths",
+            "Porcelain Glow",
+            "Amber Velvet",
+            "Midnight Turban",
+            "Pearl Shimmer",
+          ],
+          6: [
+            "Shadow Depths",
+            "Porcelain Glow",
+            "Amber Velvet",
+            "Midnight Turban",
+            "Pearl Shimmer",
+            "Golden Highlight",
+          ],
+        };
+
+        for (let colorIndex = 0; colorIndex < numColors; colorIndex++) {
+          const targetColor = dominantColors[colorIndex];
+          const pixelCoordinates = []; // Still collect for metadata verification
+
+          // Map pixels to this color group AND fill compressed array
+          for (let y = 0; y < 50; y++) {
+            for (let x = 0; x < 50; x++) {
+              const pixelIndex = (y * 50 + x) * 4;
+              const arrayIndex = y * 50 + x; // Index in compressed array
+
+              const pixelColor = {
+                r: pixels[pixelIndex],
+                g: pixels[pixelIndex + 1],
+                b: pixels[pixelIndex + 2],
+              };
+
+              // Find closest dominant color
+              let closestColorIndex = 0;
+              let closestDistance = Infinity;
+              dominantColors.forEach((domColor, index) => {
+                const distance = colorDistance(pixelColor, domColor);
+                if (distance < closestDistance) {
+                  closestDistance = distance;
+                  closestColorIndex = index;
+                }
+              });
+
+              // If this pixel belongs to current color group
+              if (closestColorIndex === colorIndex) {
+                pixelCoordinates.push([x, y]); // For logging/verification
+                compressedPixels[arrayIndex] = colorIndex + 1; // Store color index (1-6)
+              }
+            }
+          }
+
+          // Generate stages based on difficulty
+          const stages = generateStagesForDifficulty(
+            difficulty,
+            colorIndex,
+            targetColor
+          );
+
+          colorGroups.push({
+            id: colorIndex + 1,
+            name: colorNames[numColors][colorIndex],
+            targetRGB: {
+              r: targetColor.r,
+              g: targetColor.g,
+              b: targetColor.b,
+            },
+            pixelCoordinates: pixelCoordinates, // For verification only - won't be in final output
+            stages: stages,
+          });
+
+          console.log(
+            `Color ${colorIndex + 1}: ${colorNames[numColors][colorIndex]} - ${
+              pixelCoordinates.length
+            } pixels - ${stages.length} stage(s)`
+          );
+        }
+
+        return colorGroups;
+      }
+
+      /**
+       * Display both metadata and pixel data files
+       */
+      function displaySplitFormatData(
+        paintingMetadata,
+        pixelData,
+        paintingName,
+        difficulty
+      ) {
+        const paintingId = Object.keys(paintingMetadata)[0];
+        const colorCount = paintingMetadata[paintingId].colorGroups.length;
+
+        const stageInfo =
+          difficulty === "easy"
+            ? "1 stage each"
+            : difficulty === "normal"
+            ? "2 stages each"
+            : "3 stages each";
+
+        // Generate metadata file
+        const metadataContent = `/* ==============================================
+   PAINTING METADATA - ${paintingName.toUpperCase()} (${difficulty.toUpperCase()} MODE)
+   Artist: ${paintingMetadata[paintingId].artist}
+   Generated from actual painting image
+   ============================================== */
+
+const PAINTINGS = ${JSON.stringify(paintingMetadata, null, 2)};
+
+window.PAINTINGS = PAINTINGS;`;
+
+        // Generate pixel data file
+        const pixelDataContent = `/* ==============================================
+   PIXEL DATA - ${paintingName.toUpperCase()} (${difficulty.toUpperCase()} MODE)
+   Compressed format for efficient loading
+   ============================================== */
+
+const PIXEL_DATA = ${JSON.stringify(pixelData, null, 2)};
+
+window.PIXEL_DATA = PIXEL_DATA;`;
+
+        const output = document.getElementById("output");
+
+        output.innerHTML = `
+    <h4>✅ Split Format Files Generated!</h4>
+    <div style="background: #e8f5e8; padding: 15px; border-radius: 8px; margin: 10px 0;">
+      <p><strong>Painting:</strong> ${paintingName}</p>
+      <p><strong>Difficulty:</strong> ${
+        difficulty.charAt(0).toUpperCase() + difficulty.slice(1)
+      } Mode</p>
+      <p><strong>Colors:</strong> ${colorCount} colors</p>
+      <p><strong>Stages:</strong> ${stageInfo}</p>
+      <p><strong>Format:</strong> Compressed (metadata + pixel array)</p>
+    </div>
+    
+    <div style="margin: 20px 0;">
+      <h5>📄 File 1: paintingMetadata.js</h5>
+      <textarea id="metadata-output" style="width: 100%; height: 200px; font-family: monospace; font-size: 12px;" readonly>${metadataContent}</textarea>
+      <button onclick="copyMetadata()" style="margin-top: 5px;">📋 Copy Metadata File</button>
+    </div>
+
+    <div style="margin: 20px 0;">
+      <h5>📄 File 2: pixelData.js</h5>
+      <textarea id="pixel-output" style="width: 100%; height: 200px; font-family: monospace; font-size: 12px;" readonly>${pixelDataContent}</textarea>
+      <button onclick="copyPixelData()" style="margin-top: 5px;">📋 Copy Pixel Data File</button>
+    </div>
+
+    <div style="background: #f0f8ff; padding: 15px; border-radius: 8px; margin-top: 20px;">
+      <h5>🗂️ File Organization:</h5>
+      <code>data/paintings/${paintingId.replace(
+        "_" + difficulty,
+        ""
+      )}/</code><br>
+      <code>├── ${difficulty}.js</code> (metadata file)<br>
+      <code>└── ${difficulty}_pixels.js</code> (pixel data file)
+    </div>
+  `;
+
+        console.log(
+          `Generated split format for: ${paintingName} (${difficulty} mode)`
+        );
+      }
+
+      /**
+       * Copy functions for the generated files
+       */
+      function copyMetadata() {
+        const textarea = document.getElementById("metadata-output");
+        textarea.select();
+        document.execCommand("copy");
+        alert("Metadata file copied to clipboard!");
+      }
+
+      function copyPixelData() {
+        const textarea = document.getElementById("pixel-output");
+        textarea.select();
+        document.execCommand("copy");
+        alert("Pixel data file copied to clipboard!");
       }
 
       /**
