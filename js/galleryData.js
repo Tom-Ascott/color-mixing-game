@@ -146,21 +146,51 @@ function hasPaintingData(paintingId) {
 }
 
 /**
- * Get the actual painting data for gameplay
+ * Get the actual painting data for gameplay with difficulty support
  * @param {string} paintingId - Gallery painting ID
+ * @param {string} difficulty - Difficulty level: easy, normal, hard
  * @returns {Object|null} Painting data for game or null if not available
  */
-function getPaintingGameData(paintingId) {
+function getPaintingGameData(paintingId, difficulty = "normal") {
+  console.log(`Loading painting: ${paintingId}, difficulty: ${difficulty}`);
+  
+  // Map gallery IDs to painting data IDs with difficulty
   const paintingDataMap = {
-    girl_pearl: "girlwithapearlearring",
+    girl_pearl: {
+      easy: "untitledpainting_easy",      // From easy.js
+      normal: "girlwithapearlearring",    // From normal.js  
+      hard: "girlwithapearlearring_hard"  // Future hard.js
+    }
   };
+
+  const paintingMapping = paintingDataMap[paintingId];
+  if (!paintingMapping) {
+    console.error(`No mapping found for painting: ${paintingId}`);
+    return null;
+  }
+
+  const dataId = paintingMapping[difficulty];
+  if (!dataId) {
+    console.error(`No ${difficulty} mode available for ${paintingId}`);
+    return null;
+  }
+
+  // Check if the data exists in the loaded PAINTINGS
+  if (window.PAINTINGS && window.PAINTINGS[dataId]) {
+    console.log(`✅ Found ${difficulty} mode data:`, dataId);
+    return window.PAINTINGS[dataId];
+  }
+
+  console.error(`❌ Painting data not found: ${dataId}`);
+  return null;
+}
 
   const dataId = paintingDataMap[paintingId];
   if (dataId && window.PAINTINGS && window.PAINTINGS[dataId]) {
     return window.PAINTINGS[dataId];
   }
   return null;
-}
+
 
 // Export for use in other files
 window.GALLERY_DATA = GALLERY_DATA;

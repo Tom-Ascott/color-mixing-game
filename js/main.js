@@ -42,6 +42,7 @@ let gameState = {
   currentScreen: "home", // home, gallery, wing, game
   currentWing: null,
   currentPainting: null,
+  currentDifficulty: "normal", // NEW: Track selected difficulty
 
   // Current painting and progress
   currentPaintingData: null, // Will load from PAINTINGS data
@@ -166,12 +167,14 @@ function showWing(wingId) {
 }
 
 /**
- * Select a painting and start the game
+ * Select a painting and start the game with specified difficulty
  * @param {string} paintingId - Painting to play
  * @param {string} difficulty - Difficulty level: easy, normal, hard
  */
 function selectPainting(paintingId, difficulty = "normal") {
-  console.log(`Selecting painting: ${paintingId}, difficulty: ${difficulty}`);
+  console.log(
+    `🎮 Selecting painting: ${paintingId}, difficulty: ${difficulty}`
+  );
 
   const paintingInfo = getPainting(paintingId);
   if (!paintingInfo) {
@@ -179,18 +182,25 @@ function selectPainting(paintingId, difficulty = "normal") {
     return;
   }
 
-  // Check if painting data exists
-  const paintingData = getPaintingGameData(paintingId);
+  // Check if painting data exists for this difficulty
+  const paintingData = getPaintingGameData(paintingId, difficulty);
   if (!paintingData) {
-    alert(`${paintingInfo.name} is not ready to play yet. Check back soon!`);
+    alert(
+      `${paintingInfo.name} ${difficulty} mode is not ready to play yet. Try ${
+        difficulty === "easy" ? "Normal" : "Easy"
+      } mode!`
+    );
     return;
   }
 
-  // Store current painting selection
+  // Store current painting selection WITH difficulty
   gameState.currentPainting = paintingId;
+  gameState.currentDifficulty = difficulty; // NEW: Store selected difficulty
 
-  // Initialize game with the selected painting
-  const success = initializeGame(paintingData);
+  console.log(`✅ Starting ${difficulty} mode for ${paintingInfo.name}`);
+
+  // Initialize game with the selected painting and difficulty
+  const success = initializeGame(paintingData, difficulty);
   if (success) {
     showScreen("game");
   }
@@ -242,7 +252,7 @@ function renderWingPaintings(wingId) {
 }
 
 /**
- * Render a single painting card
+ * Render a single painting card with working difficulty buttons
  * @param {Object} painting - Painting data
  * @param {string} wingId - Wing this painting belongs to
  * @returns {string} HTML for painting card
@@ -256,8 +266,7 @@ function renderPaintingCard(painting, wingId) {
   const statusClass = isAvailable ? "status-available" : "status-locked";
 
   return `
-    <div class="painting-card ${painting.status}" 
-         ${isAvailable ? `onclick="selectPainting('${painting.id}')"` : ""}>
+    <div class="painting-card ${painting.status}">
       
       <div class="painting-image">
         <div class="placeholder-icon">🎨</div>
@@ -280,36 +289,62 @@ function renderPaintingCard(painting, wingId) {
         </div>
         
         <div class="difficulty-indicators">
-          <span class="difficulty-badge ${
-            isAvailable ? "difficulty-easy" : "difficulty-locked"
-          }">
-            Easy
-          </span>
-          <span class="difficulty-badge difficulty-locked">Normal</span>
-          <span class="difficulty-badge difficulty-locked">Hard</span>
+          ${
+            isAvailable
+              ? `
+            <span class="difficulty-badge difficulty-easy" 
+                  onclick="selectPainting('${painting.id}', 'easy')"
+                  style="cursor: pointer;">
+              Easy
+            </span>
+            <span class="difficulty-badge difficulty-normal" 
+                  onclick="selectPainting('${painting.id}', 'normal')"
+                  style="cursor: pointer;">
+              Normal
+            </span>
+            <span class="difficulty-badge difficulty-locked" 
+                  style="cursor: not-allowed;">
+              Hard
+            </span>
+          `
+              : `
+            <span class="difficulty-badge difficulty-locked">Easy</span>
+            <span class="difficulty-badge difficulty-locked">Normal</span>
+            <span class="difficulty-badge difficulty-locked">Hard</span>
+          `
+          }
         </div>
       </div>
     </div>
   `;
 }
+s;
 
 /**
- * Load painting data from compressed format if available
+ * Load painting data from compressed format with difficulty support
  * @param {string} paintingId - ID of painting to load
+ * @param {string} difficulty - Difficulty mode: easy, normal, hard
  * @returns {Object} Painting data with pixels arrays
  */
-function loadPaintingData(paintingId) {
-  console.log(`Loading painting: ${paintingId}`);
+function loadPaintingData(paintingId, difficulty = "normal") {
+  console.log(`Loading painting: ${paintingId}, difficulty: ${difficulty}`);
 
-  // Check if compressed data exists
-  if (typeof PIXEL_DATA !== "undefined" && PIXEL_DATA[paintingId]) {
+  // Get the painting metadata (without pixels)
+  const paintingDataId = getPaintingDataId(paintingId, difficulty);
+  if (!paintingDataId || !window.PAINTINGS[paintingDataId]) {
+    console.error(`Painting metadata not found: ${paintingDataId}`);
+    return null;
+  }
+
+  const painting = window.PAINTINGS[paintingDataId];
+
+  // Get the compressed pixel data
+  const pixelDataId = getPixelDataId(paintingId, difficulty);
+  if (window.PIXEL_DATA && window.PIXEL_DATA[pixelDataId]) {
     console.log("Using compressed data format");
 
-    // Get original painting (without pixels)
-    const painting = PAINTINGS[paintingId];
-
     // Decode compressed pixels
-    const compressedData = PIXEL_DATA[paintingId];
+    const compressedData = window.PIXEL_DATA[pixelDataId];
     const decodedPixels = decodePixelData(
       compressedData.pixels,
       painting.colorGroups.length
@@ -324,22 +359,63 @@ function loadPaintingData(paintingId) {
       })),
     };
 
+    console.log(
+      `✅ Loaded ${difficulty} mode with ${painting.colorGroups.length} colors`
+    );
     return paintingWithPixels;
   } else {
-    console.log("Using original data format");
-    return PAINTINGS[paintingId];
+    console.log("Using original data format (fallback)");
+    return painting;
   }
 }
 
 /**
- * Initialize a new game with specified painting data
- * @param {Object} paintingData - Painting data from PAINTINGS
+ * Helper: Get painting data ID based on gallery ID and difficulty
  */
-function initializeGame(paintingData) {
-  console.log(`Initializing game with painting: ${paintingData.name}`);
+function getPaintingDataId(paintingId, difficulty) {
+  const mappings = {
+    girl_pearl: {
+      easy: "untitledpainting_easy",
+      normal: "girlwithapearlearring",
+      hard: "girlwithapearlearring_hard",
+    },
+  };
 
-  // Store painting data
-  gameState.currentPaintingData = loadPaintingData(paintingData.id);
+  return mappings[paintingId]?.[difficulty];
+}
+
+/**
+ * Helper: Get pixel data ID based on gallery ID and difficulty
+ */
+function getPixelDataId(paintingId, difficulty) {
+  const mappings = {
+    girl_pearl: {
+      easy: "untitledpainting_easy",
+      normal: "girlwithapearlearring",
+      hard: "girlwithapearlearring_hard",
+    },
+  };
+
+  return mappings[paintingId]?.[difficulty];
+}
+
+/**
+ * Initialize a new game with specified painting data and difficulty
+ * @param {Object} paintingData - Painting data from PAINTINGS
+ * @param {string} difficulty - Difficulty mode selected
+ */
+function initializeGame(paintingData, difficulty = "normal") {
+  console.log(`🎯 Initializing ${difficulty} mode: ${paintingData.name}`);
+
+  // Load painting data with the specified difficulty
+  gameState.currentPaintingData = loadPaintingData(paintingData.id, difficulty);
+
+  if (!gameState.currentPaintingData) {
+    console.error("Failed to load painting data");
+    alert("Failed to load painting data. Please try again.");
+    return false;
+  }
+
   // Reset game state
   gameState.currentColorGroupIndex = 0;
   gameState.currentStage = 1;
@@ -363,9 +439,15 @@ function initializeGame(paintingData) {
   if (submitBtn) submitBtn.disabled = false;
 
   // Load first color
-  loadCurrentColor();
+  const success = loadCurrentColor();
 
-  return true;
+  if (success) {
+    console.log(
+      `✅ ${difficulty} mode initialized successfully with ${gameState.currentPaintingData.colorGroups.length} colors`
+    );
+  }
+
+  return success;
 }
 
 /**
